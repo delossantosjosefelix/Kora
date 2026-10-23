@@ -10,9 +10,14 @@ import Usuarios from './pages/Usuarios.jsx';
 
 export default function App() {
   const { cargando, estaAutenticado } = useAuth();
+  const location = useLocation();
 
   if (cargando) {
     return null;
+  }
+
+  if (!estaAutenticado && location.pathname !== '/login') {
+    return <Navigate to="/login" replace />;
   }
 
   return (

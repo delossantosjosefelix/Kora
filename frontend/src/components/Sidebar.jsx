@@ -9,6 +9,8 @@ const enlaceActivo = ({ isActive, className }) =>
 export default function Sidebar() {
   const { usuario, cerrarSesion } = useAuth();
 
+  if (!usuario) return null;
+
   const items = NAV_ITEMS.filter((item) => item.roles.includes(usuario.rol));
 
   return (
