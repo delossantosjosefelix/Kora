@@ -39,52 +39,54 @@ export default function CambiarPassword() {
   };
 
   return (
-    <div className="auth-card">
-      <div className="brand">
-        <h2>Cambiar contraseña</h2>
-        <p>Establezca su nueva contraseña de acceso.</p>
-      </div>
-      <form onSubmit={manejarEnvio} noValidate>
-        <div className="auth-field">
-          <label htmlFor="actual">Contraseña actual</label>
-          <input
-            id="actual"
-            type="password"
-            required
-            autoComplete="current-password"
-            value={form.actual}
-            onChange={(e) => setForm({ ...form, actual: e.target.value })}
-          />
+    <div className="auth-shell">
+      <main className="auth-card">
+        <div className="brand">
+          <h2>Cambiar contraseña</h2>
+          <p>Establezca su nueva contraseña de acceso.</p>
         </div>
-        <div className="auth-field">
-          <label htmlFor="nueva">Nueva contraseña</label>
-          <input
-            id="nueva"
-            type="password"
-            required
-            autoComplete="new-password"
-            value={form.nueva}
-            onChange={(e) => setForm({ ...form, nueva: e.target.value })}
-          />
+        <form onSubmit={manejarEnvio} noValidate>
+          <div className="auth-field">
+            <label htmlFor="actual">Contraseña actual</label>
+            <input
+              id="actual"
+              type="password"
+              required
+              autoComplete="current-password"
+              value={form.actual}
+              onChange={(e) => setForm({ ...form, actual: e.target.value })}
+            />
+          </div>
+          <div className="auth-field">
+            <label htmlFor="nueva">Nueva contraseña</label>
+            <input
+              id="nueva"
+              type="password"
+              required
+              autoComplete="new-password"
+              value={form.nueva}
+              onChange={(e) => setForm({ ...form, nueva: e.target.value })}
+            />
+          </div>
+          <div className="auth-field">
+            <label htmlFor="confirmar">Confirmar nueva contraseña</label>
+            <input
+              id="confirmar"
+              type="password"
+              required
+              autoComplete="new-password"
+              value={form.confirmar}
+              onChange={(e) => setForm({ ...form, confirmar: e.target.value })}
+            />
+          </div>
+          <button type="submit" className="button button--primary button--block" disabled={enviando}>
+            {enviando ? 'Actualizando...' : 'Actualizar contraseña'}
+          </button>
+        </form>
+        <div className="auth-footer">
+          <a href="/dashboard">Volver al panel</a>
         </div>
-        <div className="auth-field">
-          <label htmlFor="confirmar">Confirmar nueva contraseña</label>
-          <input
-            id="confirmar"
-            type="password"
-            required
-            autoComplete="new-password"
-            value={form.confirmar}
-            onChange={(e) => setForm({ ...form, confirmar: e.target.value })}
-          />
-        </div>
-        <button type="submit" className="button button--primary button--block" disabled={enviando}>
-          {enviando ? 'Actualizando...' : 'Actualizar contraseña'}
-        </button>
-      </form>
-      <div className="auth-footer">
-        <a href="/dashboard">Volver al panel</a>
-      </div>
+      </main>
     </div>
   );
 }

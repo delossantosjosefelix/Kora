@@ -20,6 +20,10 @@ export default function App() {
     return <Navigate to="/login" replace />;
   }
 
+  if (estaAutenticado && location.pathname === '/login') {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   return (
     <Routes>
       <Route path="/login" element={<AuthLayout><Login /></AuthLayout>} />

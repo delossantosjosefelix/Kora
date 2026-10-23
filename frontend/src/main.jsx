@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import App from './App.jsx';
 import { ErrorBoundary } from './components/ErrorBoundary.jsx';
+import { AuthProvider } from './context/AuthContext.jsx';
 import './styles/variables.css';
 import './styles/global.css';
 import './styles/layout.css';
@@ -12,9 +13,11 @@ import './styles/auth.css';
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>
-      <ErrorBoundary>
-        <App />
-      </ErrorBoundary>
+      <AuthProvider>
+        <ErrorBoundary>
+          <App />
+        </ErrorBoundary>
+      </AuthProvider>
       <Toaster
         position="top-right"
         toastOptions={{
