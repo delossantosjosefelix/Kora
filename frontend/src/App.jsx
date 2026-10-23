@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth.js';
 import AuthLayout from './layouts/AuthLayout.jsx';
 import AppLayout from './layouts/AppLayout.jsx';
