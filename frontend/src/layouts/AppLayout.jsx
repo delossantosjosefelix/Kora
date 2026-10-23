@@ -6,8 +6,12 @@ import notify from '../utils/notify.js';
 import '../styles/layout.css';
 
 export default function AppLayout() {
-  const { usuario, cerrarSesion } = useAuth();
+  const { usuario, cargando, cerrarSesion } = useAuth();
   const navigate = useNavigate();
+
+  if (cargando || !usuario) {
+    return null;
+  }
 
   const manejarSalida = () => {
     notify
