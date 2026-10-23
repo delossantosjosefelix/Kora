@@ -1,0 +1,38 @@
+# Dependencias
+node_modules/
+
+# Variables de entorno
+.env
+.env.*
+!.env.example
+
+# Imágenes subidas por los usuarios
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# Copias de seguridad y volcados
+backups/
+backend/backups/
+*.dump
+*.sql.gz
+
+# Compilados
+frontend/dist/
+release/
+
+# Herramientas locales de agentes (skills descargadas)
+.agents/
+skills-lock.json
+
+# Sistema y editor
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log
+npm-debug.log*
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# Cobertura de pruebas
+coverage/
