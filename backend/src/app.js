@@ -6,6 +6,7 @@ import morgan from 'morgan';
 import { authRouter } from './routes/auth.routes.js';
 import { healthRouter } from './routes/health.routes.js';
 import { rolesRouter } from './routes/roles.routes.js';
+import { usuarioRouter } from './routes/usuario.routes.js';
 import { ErrorHttp } from './utils/ErrorHttp.js';
 
 export const app = express();
@@ -24,6 +25,7 @@ app.use(cookieParser());
 app.use('/api/health', healthRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/roles', rolesRouter);
+app.use('/api/usuarios', usuarioRouter);
 
 app.use((req, res) => {
   return res.status(404).json({
