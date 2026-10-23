@@ -9,12 +9,14 @@
 
 .auth-card {
   width: min(420px, 92%);
+  max-width: 420px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
-  padding: 32px 28px;
+  padding: 36px 28px;
   text-align: center;
+  margin: 0 auto;
 }
 
 .auth-card .brand {
@@ -27,8 +29,9 @@
 .auth-card .brand-logo {
   width: 48px;
   height: auto;
-  margin: 0 auto 12px;
+  margin: 0 auto 14px;
   display: block;
+  filter: drop-shadow(0 6px 10px rgba(245, 158, 11, 0.22));
 }
 
 .auth-card h2 {
@@ -71,19 +74,40 @@
   outline-offset: 1px;
 }
 
-.error-text {
-  color: var(--color-error);
-  font-size: 0.85rem;
-  margin-bottom: 16px;
-  text-align: left;
+.password-input {
+  position: relative;
+  width: 100%;
+}
+
+.password-input input {
+  padding-right: 44px;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 0;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 4px;
+}
+
+.password-toggle:hover {
+  color: var(--color-primary);
 }
 
 .button--block {
   width: 100%;
+  margin-top: 8px;
 }
 
 .auth-footer {
-  margin-top: 20px;
+  margin-top: 24px;
   font-size: 0.85rem;
   color: var(--color-text-muted);
 }
@@ -95,4 +119,22 @@
 
 .auth-footer a:hover {
   text-decoration: underline;
+}
+
+.auth-message {
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+
+.auth-message--info {
+  background: var(--color-info-soft);
+  color: var(--color-info);
+}
+
+.sin-permiso h2 {
+  margin-top: 0;
+  color: var(--color-error);
 }

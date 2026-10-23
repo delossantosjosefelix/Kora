@@ -1,9 +1,7 @@
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 
 export function RequireAuth({ children, roles }) {
   const { usuario, cargando, estaAutenticado } = useAuth();
-  const navigate = useNavigate();
 
   if (cargando) {
     return (
@@ -14,7 +12,6 @@ export function RequireAuth({ children, roles }) {
   }
 
   if (!estaAutenticado) {
-    navigate('/login', { replace: true });
     return null;
   }
 

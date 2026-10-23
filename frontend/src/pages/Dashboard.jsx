@@ -29,7 +29,9 @@ export default function Dashboard() {
           </div>
           <div className="form-field">
             <label>Estado</label>
-            <p style={{ margin: 0 }}>{usuario?.debe_cambiar_password ? 'Debe cambiar contraseña' : 'Activo'}</p>
+            <p style={{ margin: 0 }}>
+              {usuario?.debe_cambiar_password ? 'Debe cambiar contraseña' : 'Activo'}
+            </p>
           </div>
           <div className="form-field">
             <label>Permisos</label>
@@ -49,7 +51,6 @@ export default function Dashboard() {
               className="button button--primary"
               onClick={(e) => {
                 e.preventDefault();
-                // Link handles navigation; kept for clarity
               }}
             >
               Gestionar usuarios
