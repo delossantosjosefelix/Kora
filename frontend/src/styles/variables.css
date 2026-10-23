@@ -1,0 +1,44 @@
+:root {
+  /* Marca */
+  --color-primary: #0F766E;
+  --color-primary-hover: #0B5F59;
+  --color-primary-soft: #CCFBF1;
+  --color-accent: #F59E0B;
+  --color-accent-hover: #D97706;
+  --color-accent-soft: #FEF3C7;
+  --color-dark: #111827;
+  --color-mint: #F0FDFA;
+  --color-bg: #F9FAFB;
+  --color-surface: #FFFFFF;
+  --color-white: #FFFFFF;
+
+  /* Texto y bordes */
+  --color-text: #111827;
+  --color-text-muted: #6B7280;
+  --color-border: #E5E7EB;
+
+  /* Estados */
+  --color-success: #16A34A;
+  --color-success-soft: #DCFCE7;
+  --color-error: #DC2626;
+  --color-error-soft: #FEE2E2;
+  --color-info: #0369A1;
+  --color-info-soft: #E0F2FE;
+  --color-warning-bg: #FEF3C7;
+  --color-warning-text: #92400E;
+
+  /* Tipografía */
+  --font-sans: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'Cascadia Code', Consolas, 'Courier New', monospace;
+
+  /* Formas y sombras */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-full: 999px;
+  --shadow-sm: 0 1px 2px rgba(17, 24, 39, 0.06);
+  --shadow-md: 0 18px 50px rgba(17, 24, 39, 0.09);
+
+  /* Movimiento */
+  --transition: 160ms ease;
+}
