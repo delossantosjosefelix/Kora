@@ -7,8 +7,10 @@ import { ErrorBoundary } from './components/ErrorBoundary.jsx';
 import { AuthProvider } from './context/AuthContext.jsx';
 import './styles/variables.css';
 import './styles/global.css';
+import './styles/ui.css';
 import './styles/layout.css';
 import './styles/auth.css';
+import './styles/users.css';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -23,10 +25,11 @@ createRoot(document.getElementById('root')).render(
         toastOptions={{
           duration: 4000,
           style: {
-            background: 'var(--color-dark)',
+            background: 'var(--color-ink)',
             color: 'var(--color-white)',
             borderRadius: 'var(--radius-md)',
             fontSize: '0.9rem',
+            fontFamily: 'var(--font-sans)',
           },
           success: {
             iconTheme: {

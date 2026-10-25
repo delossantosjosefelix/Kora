@@ -7,14 +7,16 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "prebuild": "npm run check:emojis",
+    "preview": "vite preview",
+    "check:emojis": "node scripts/check-emojis.mjs"
   },
   "dependencies": {
-    "lucide-react": "^1.61.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "react-hot-toast": "^2.6.1",
     "react-router-dom": "^7.18.4",
+    "reicon-react": "^1.2.6",
     "sweetalert2": "^11.26.25"
   },
   "devDependencies": {

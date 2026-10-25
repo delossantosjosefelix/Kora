@@ -4,6 +4,10 @@ import notify from '../utils/notify.js';
 
 export const AuthContext = createContext(null);
 
+function mensajeDeRespuesta(respuesta, respaldo) {
+  return respuesta?.datos?.mensaje || respaldo;
+}
+
 export function AuthProvider({ children }) {
   const [usuario, setUsuario] = useState(null);
   const [cargando, setCargando] = useState(true);
@@ -12,11 +16,7 @@ export function AuthProvider({ children }) {
     setCargando(true);
     try {
       const respuesta = await api.get('/auth/me');
-      if (respuesta.ok && respuesta.datos?.usuario) {
-        setUsuario(respuesta.datos.usuario);
-      } else {
-        setUsuario(null);
-      }
+      setUsuario(respuesta.ok && respuesta.datos?.usuario ? respuesta.datos.usuario : null);
     } catch {
       setUsuario(null);
     } finally {
@@ -29,53 +29,75 @@ export function AuthProvider({ children }) {
   }, [cargarSesion]);
 
   const iniciarSesion = async ({ username, password }) => {
-    const respuesta = await api.post('/auth/login', { username, password });
-    if (respuesta.ok && respuesta.datos?.usuario) {
-      setUsuario(respuesta.datos.usuario);
-      notify.success('Bienvenido a Kora');
-      return true;
+    let respuesta;
+
+    try {
+      respuesta = await api.post('/auth/login', { username, password });
+    } catch {
+      throw new Error('No se pudo conectar con el servidor. Intenta de nuevo.');
     }
-    notify.error(respuesta.datos?.mensaje || 'Usuario o contraseña incorrectos.');
-    return false;
+
+    if (!respuesta.ok || !respuesta.datos?.usuario) {
+      throw new Error(mensajeDeRespuesta(respuesta, 'Usuario o contraseña incorrectos.'));
+    }
+
+    setUsuario(respuesta.datos.usuario);
+    notify.success(`Bienvenido, ${respuesta.datos.usuario.nombre}.`);
+    return respuesta.datos.usuario;
   };
 
   const cerrarSesion = async () => {
-    await api.post('/auth/logout');
-    setUsuario(null);
-    notify.info('Sesión cerrada.');
+    try {
+      await api.post('/auth/logout');
+    } catch {
+      // La sesión local se cierra aunque el servidor no responda.
+    } finally {
+      setUsuario(null);
+      notify.info('Sesión cerrada.');
+    }
   };
 
   const cambiarPassword = async ({ actual, nueva, confirmar }) => {
-    const respuesta = await api.post('/auth/cambiar-password', {
-      passwordActual: actual,
-      passwordNueva: nueva,
-      confirmarPassword: confirmar,
-    });
+    let respuesta;
 
-    if (respuesta.ok) {
-      notify.success(respuesta.datos?.mensaje || 'Contraseña actualizada.');
-      setUsuario((anterior) => (anterior ? { ...anterior, debe_cambiar_password: false } : anterior));
-      return true;
+    try {
+      respuesta = await api.post('/auth/cambiar-password', {
+        passwordActual: actual,
+        passwordNueva: nueva,
+        confirmarPassword: confirmar,
+      });
+    } catch {
+      throw new Error('No se pudo conectar con el servidor. Intenta de nuevo.');
     }
-    notify.error(respuesta.datos?.mensaje || 'No se pudo actualizar la contraseña.');
-    return false;
+
+    if (!respuesta.ok) {
+      throw new Error(mensajeDeRespuesta(respuesta, 'No se pudo actualizar la contraseña.'));
+    }
+
+    setUsuario((anterior) =>
+      anterior ? { ...anterior, debe_cambiar_password: false } : anterior,
+    );
+    notify.success(mensajeDeRespuesta(respuesta, 'Contraseña actualizada.'));
+    return true;
   };
 
   const puede = (rol) => Boolean(usuario && usuario.rol === rol);
 
   return (
-    <AuthContext.Provider value={{
-      usuario,
-      cargando,
-      estaAutenticado: Boolean(usuario),
-      iniciarSesion,
-      cerrarSesion,
-      cambiarPassword,
-      puede,
-      esAdministrador: puede('Administrador'),
-      esGerente: puede('Gerente'),
-      esCajero: puede('Cajero'),
-    }}>
+    <AuthContext.Provider
+      value={{
+        usuario,
+        cargando,
+        estaAutenticado: Boolean(usuario),
+        iniciarSesion,
+        cerrarSesion,
+        cambiarPassword,
+        puede,
+        esAdministrador: puede('Administrador'),
+        esGerente: puede('Gerente'),
+        esCajero: puede('Cajero'),
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

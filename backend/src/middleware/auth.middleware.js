@@ -49,6 +49,7 @@ export async function verificarAutenticacion(req, res, next) {
           u.activo,
           u.debe_cambiar_password,
           u.foto_url,
+          u.ultimo_login,
           r.nombre AS rol
         FROM usuarios u
         INNER JOIN roles r ON r.id = u.rol_id
@@ -76,6 +77,17 @@ export async function verificarAutenticacion(req, res, next) {
 
     return next(error);
   }
+}
+
+export function exigirPasswordActualizada(req, res, next) {
+  if (req.usuario?.debe_cambiar_password) {
+    return res.status(403).json({
+      ok: false,
+      mensaje: 'Debes cambiar tu contraseña antes de continuar.',
+    });
+  }
+
+  return next();
 }
 
 export function autorizarRoles(...rolesPermitidos) {

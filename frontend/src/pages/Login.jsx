@@ -1,89 +1,117 @@
 import { useState } from 'react';
-import BrandLogo from '../components/BrandLogo.jsx';
+import { AlertCircle, Loader, Lock, User } from 'reicon-react';
+import PasswordInput from '../components/ui/PasswordInput.jsx';
 import { useAuth } from '../hooks/useAuth.js';
-import notify from '../utils/notify.js';
-import '../styles/auth.css';
 
 export default function Login() {
-  const { iniciarSesion, cargando } = useAuth();
+  const { iniciarSesion } = useAuth();
   const [form, setForm] = useState({ username: '', password: '' });
-  const [mostrarPassword, setMostrarPassword] = useState(false);
+  const [errores, setErrores] = useState({});
+  const [errorGeneral, setErrorGeneral] = useState('');
   const [enviando, setEnviando] = useState(false);
+
+  const actualizarCampo = (campo) => (evento) => {
+    setForm((anterior) => ({ ...anterior, [campo]: evento.target.value }));
+    setErrores((anterior) => ({ ...anterior, [campo]: '' }));
+    setErrorGeneral('');
+  };
 
   const manejarEnvio = async (evento) => {
     evento.preventDefault();
+
+    const nuevosErrores = {};
+    if (!form.username.trim()) {
+      nuevosErrores.username = 'Escribe tu nombre de usuario.';
+    }
+    if (!form.password) {
+      nuevosErrores.password = 'Escribe tu contraseña.';
+    }
+
+    setErrores(nuevosErrores);
+    if (Object.keys(nuevosErrores).length > 0) return;
+
     try {
       setEnviando(true);
+      setErrorGeneral('');
       await iniciarSesion({
-        username: form.username,
+        username: form.username.trim(),
         password: form.password,
       });
     } catch (error) {
-      notify.error(error.message || 'No se pudo iniciar sesión.');
+      setErrorGeneral(error.message || 'No se pudo iniciar sesión.');
     } finally {
       setEnviando(false);
     }
   };
 
   return (
-    <div className="auth-shell">
-      <main className="auth-card">
-        <div className="brand">
-          <BrandLogo variante="color" className="brand-logo" alt="Kora" />
-          <h2>Iniciar sesión</h2>
-          <p>Acceda al punto de venta de Kora.</p>
+    <>
+      <div className="auth-header">
+        <h1>Acceso al sistema</h1>
+        <p>Ingresa tus datos para continuar.</p>
+      </div>
+
+      {errorGeneral ? (
+        <div className="alert alert--error" role="alert">
+          <AlertCircle size={18} />
+          <span>{errorGeneral}</span>
         </div>
+      ) : null}
 
-        {enviando ? (
-          <div className="auth-message auth-message--info">
-            Ingresando, espere un momento...
-          </div>
-        ) : null}
-
-        <form onSubmit={manejarEnvio} noValidate>
-          <div className="auth-field">
-            <label htmlFor="username">Nombre de usuario</label>
+      <form className="auth-form" onSubmit={manejarEnvio} noValidate>
+        <div className="field">
+          <label htmlFor="username">Nombre de usuario</label>
+          <div className="input-wrap has-leading-icon">
+            <span className="leading-icon" aria-hidden="true">
+              <User size={18} />
+            </span>
             <input
               id="username"
-              required
+              className={`input${errores.username ? ' input--error' : ''}`}
               autoComplete="username"
+              autoFocus
               value={form.username}
-              onChange={(e) => setForm({ ...form, username: e.target.value })}
+              onChange={actualizarCampo('username')}
+              aria-invalid={Boolean(errores.username)}
+              placeholder="tu.usuario"
             />
           </div>
-          <div className="auth-field">
-            <label htmlFor="password">Contraseña</label>
-            <div className="password-input">
-              <input
-                id="password"
-                required
-                type={mostrarPassword ? 'text' : 'password'}
-                autoComplete="current-password"
-                value={form.password}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
-              />
-              <button
-                type="button"
-                className="password-toggle"
-                onClick={() => setMostrarPassword(!mostrarPassword)}
-                aria-label={mostrarPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-              >
-                {mostrarPassword ? '🙈' : '👁️'}
-              </button>
-            </div>
-          </div>
-          <button
-            type="submit"
-            className="button button--primary button--block"
-            disabled={enviando || cargando}
-          >
-            {enviando ? 'Ingresando...' : 'Ingresar'}
-          </button>
-        </form>
-        <div className="auth-footer">
-          Kora · Punto de venta académico
+          {errores.username ? (
+            <span className="field-error">{errores.username}</span>
+          ) : null}
         </div>
-      </main>
-    </div>
+
+        <PasswordInput
+          id="password"
+          label="Contraseña"
+          icon={Lock}
+          autoComplete="current-password"
+          value={form.password}
+          onChange={actualizarCampo('password')}
+          error={errores.password}
+          placeholder="Escribe tu contraseña"
+        />
+
+        <button
+          type="submit"
+          className="button button--primary button--block"
+          disabled={enviando}
+        >
+          {enviando ? (
+            <>
+              <Loader size={18} className="spin" />
+              Ingresando...
+            </>
+          ) : (
+            'Ingresar'
+          )}
+        </button>
+      </form>
+
+      <p className="auth-form-footer">
+        ¿Olvidaste tu contraseña? Solicita al administrador que la restablezca.
+      </p>
+
+    </>
   );
 }

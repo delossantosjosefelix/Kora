@@ -2,14 +2,25 @@ import { Router } from 'express';
 import {
   actualizarUsuario,
   crearUsuario,
+  eliminarUsuario,
   obtenerUsuario,
   listarUsuarios
 } from '../controllers/usuario.controller.js';
-import { autorizarRoles, verificarAutenticacion } from '../middleware/auth.middleware.js';
+import {
+  autorizarRoles,
+  exigirPasswordActualizada,
+  verificarAutenticacion,
+} from '../middleware/auth.middleware.js';
 
 export const usuarioRouter = Router();
 
-usuarioRouter.get('/', verificarAutenticacion, autorizarRoles('Administrador'), listarUsuarios);
-usuarioRouter.get('/:id', verificarAutenticacion, autorizarRoles('Administrador'), obtenerUsuario);
-usuarioRouter.post('/', verificarAutenticacion, autorizarRoles('Administrador'), crearUsuario);
-usuarioRouter.patch('/:id', verificarAutenticacion, autorizarRoles('Administrador'), actualizarUsuario);
+const rolesGestionUsuarios = autorizarRoles('Administrador', 'Gerente');
+
+usuarioRouter.use(verificarAutenticacion, exigirPasswordActualizada);
+
+usuarioRouter.get('/', rolesGestionUsuarios, listarUsuarios);
+usuarioRouter.get('/:id', rolesGestionUsuarios, obtenerUsuario);
+usuarioRouter.post('/', rolesGestionUsuarios, crearUsuario);
+usuarioRouter.patch('/:id', rolesGestionUsuarios, actualizarUsuario);
+usuarioRouter.delete('/:id', rolesGestionUsuarios, eliminarUsuario);
+

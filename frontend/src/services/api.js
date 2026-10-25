@@ -29,5 +29,6 @@ export const api = {
   get: (ruta) => request(ruta),
   post: (ruta, cuerpo) => request(ruta, { metodo: 'POST', cuerpo }),
   patch: (ruta, cuerpo) => request(ruta, { metodo: 'PATCH', cuerpo }),
+  delete: (ruta) => request(ruta, { metodo: 'DELETE' }),
   eliminar: (ruta) => request(ruta, { metodo: 'DELETE' }),
 };

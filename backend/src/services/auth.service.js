@@ -16,6 +16,7 @@ const CAMPOS_USUARIO = `
   u.bloqueado_hasta,
   u.debe_cambiar_password,
   u.foto_url,
+  u.ultimo_login,
   r.nombre AS rol
 `;
 
@@ -28,6 +29,7 @@ function aUsuarioPublico(usuario) {
     rol: usuario.rol,
     foto_url: usuario.foto_url,
     debe_cambiar_password: usuario.debe_cambiar_password,
+    ultimo_login: usuario.ultimo_login,
   };
 }
 
@@ -196,16 +198,19 @@ export async function iniciarSesion({ username, password, ip }) {
     throw new ErrorHttp(401, 'Usuario o contraseña incorrectos.');
   }
 
-  await query(
+  const { rows: sesion } = await query(
     `
       UPDATE usuarios
       SET intentos_fallidos = 0,
           bloqueado_hasta = NULL,
           ultimo_login = CURRENT_TIMESTAMP
       WHERE id = $1
+      RETURNING ultimo_login
     `,
     [usuario.id],
   );
+
+  usuario.ultimo_login = sesion[0]?.ultimo_login ?? usuario.ultimo_login;
 
   await registrarAuditoria({
     usuarioId: usuario.id,

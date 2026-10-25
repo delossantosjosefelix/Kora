@@ -1,4 +1,5 @@
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router-dom';
+import { Loader } from 'reicon-react';
 import { useAuth } from './hooks/useAuth.js';
 import AuthLayout from './layouts/AuthLayout.jsx';
 import AppLayout from './layouts/AppLayout.jsx';
@@ -8,54 +9,68 @@ import Dashboard from './pages/Dashboard.jsx';
 import CambiarPassword from './pages/CambiarPassword.jsx';
 import Usuarios from './pages/Usuarios.jsx';
 
+function destinoInicial(usuario) {
+  return usuario?.debe_cambiar_password ? '/cambiar-password' : '/dashboard';
+}
+
 export default function App() {
-  const { cargando, estaAutenticado } = useAuth();
-  const location = useLocation();
+  const { cargando, estaAutenticado, usuario } = useAuth();
 
   if (cargando) {
-    return null;
+    return (
+      <div className="app-loading">
+        <Loader size={18} className="spin" />
+        <span>Cargando Kora...</span>
+      </div>
+    );
   }
 
-  if (!estaAutenticado && location.pathname !== '/login') {
-    return <Navigate to="/login" replace />;
-  }
-
-  if (estaAutenticado && location.pathname === '/login') {
-    return <Navigate to="/dashboard" replace />;
-  }
+  const inicio = destinoInicial(usuario);
 
   return (
     <Routes>
-      <Route path="/login" element={<AuthLayout><Login /></AuthLayout>} />
+      <Route
+        path="/login"
+        element={
+          estaAutenticado ? (
+            <Navigate to={inicio} replace />
+          ) : (
+            <AuthLayout>
+              <Login />
+            </AuthLayout>
+          )
+        }
+      />
+
       <Route
         path="/cambiar-password"
         element={
-          <AppLayout>
-            <RequireAuth>
+          !estaAutenticado ? (
+            <Navigate to="/login" replace />
+          ) : (
+            <AuthLayout>
               <CambiarPassword />
-            </RequireAuth>
-          </AppLayout>
+            </AuthLayout>
+          )
         }
       />
-      <Route
-        element={
-          <AppLayout>
-            <RequireAuth />
-          </AppLayout>
-        }
-      >
-        <Route index element={<Navigate to="/dashboard" replace />} />
-        <Route path="dashboard" element={<Dashboard />} />
-        <Route
-          path="usuarios"
-          element={
-            <RequireAuth roles={['Administrador']}>
-              <Usuarios />
-            </RequireAuth>
-          }
-        />
+
+      <Route element={<RequireAuth />}>
+        <Route element={<AppLayout />}>
+          <Route path="/" element={<Navigate to={inicio} replace />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route
+            path="/usuarios"
+            element={
+              <RequireAuth roles={['Administrador', 'Gerente']}>
+                <Usuarios />
+              </RequireAuth>
+            }
+          />
+        </Route>
       </Route>
-      <Route path="*" element={<Navigate to="/login" replace />} />
+
+      <Route path="*" element={<Navigate to={estaAutenticado ? inicio : '/login'} replace />} />
     </Routes>
   );
 }
