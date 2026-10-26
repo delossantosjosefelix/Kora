@@ -42,12 +42,12 @@ Antes de empezar un día, revisa la [[Rutina diaria]]. Si te atrasas, mira [[Si 
 - [x] Listo cuando: Un movimiento actualiza el stock y deja registro
 
 ### [[2026-10-30|Vie 30 oct]]
-- [ ] Suplidores y pantallas de Existencias y Movimientos
-- [ ] Listo cuando: Se ve el historial con filtros
+- [x] Suplidores y pantallas de Existencias y Movimientos
+- [x] Listo cuando: Se ve el historial con filtros
 
 ### [[2026-10-31|Sáb 31 oct]]
-- [ ] API de compras: compra, detalle y movimientos en una sola transacción
-- [ ] Listo cuando: Una compra sube el stock
+- [x] API de compras: compra, detalle y movimientos en una sola transacción
+- [x] Listo cuando: Una compra sube el stock
 
 ### [[2026-11-01|Dom 1 nov]]
 **Hito 1.** Al terminar, etiqueta de Git v0.1. Ver [[Hitos]].

@@ -7,6 +7,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import { authRouter } from './routes/auth.routes.js';
 import { categoriaRouter } from './routes/categoria.routes.js';
+import { compraRouter } from './routes/compra.routes.js';
 import { healthRouter } from './routes/health.routes.js';
 import { inventarioRouter } from './routes/inventario.routes.js';
 import { productoRouter } from './routes/producto.routes.js';
@@ -46,6 +47,7 @@ app.use('/api/unidades', unidadRouter);
 app.use('/api/productos', productoRouter);
 app.use('/api/inventario', inventarioRouter);
 app.use('/api/suplidores', suplidorRouter);
+app.use('/api/compras', compraRouter);
 app.use('/api/roles', rolesRouter);
 app.use('/api/usuarios', usuarioRouter);
 
