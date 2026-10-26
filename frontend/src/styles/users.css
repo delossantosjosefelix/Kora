@@ -904,3 +904,162 @@
     gap: 10px;
   }
 }
+
+/* Modulo de Compras y Recepcion de Mercancia */
+.compra-layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .compra-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.compra-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.compra-card-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-ink);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.compra-search-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.compra-search-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  max-height: 280px;
+  overflow-y: auto;
+  z-index: 50;
+  padding: 4px;
+  list-style: none;
+  margin: 0;
+}
+
+.compra-search-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  transition: background var(--transition);
+  font-size: 0.86rem;
+}
+
+.compra-search-item:hover,
+.compra-search-item--active {
+  background: var(--color-surface-muted);
+}
+
+.compra-search-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.compra-search-item-title {
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.compra-search-item-meta {
+  font-size: 0.76rem;
+  color: var(--color-text-muted);
+}
+
+.compra-table-input {
+  width: 100%;
+  max-width: 100px;
+  padding: 6px 8px;
+  min-height: 32px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: right;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xs);
+  background: var(--color-surface);
+  color: var(--color-ink);
+}
+
+.compra-table-input:focus {
+  border-color: var(--color-primary);
+  outline: none;
+}
+
+.compra-summary-sticky {
+  position: sticky;
+  top: 80px;
+}
+
+.compra-summary-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-top: 1px dashed var(--color-border);
+  border-bottom: 1px dashed var(--color-border);
+  padding: 12px 0;
+}
+
+.compra-summary-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.88rem;
+  color: var(--color-text-muted);
+}
+
+.compra-summary-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 1.25rem;
+  font-weight: 750;
+  color: var(--color-ink);
+  margin-top: 4px;
+}
+
+.compra-status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+}
+
+.compra-status-badge--completada {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.compra-status-badge--anulada {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+

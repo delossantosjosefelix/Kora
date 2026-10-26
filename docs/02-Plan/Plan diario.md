@@ -52,8 +52,8 @@ Antes de empezar un día, revisa la [[Rutina diaria]]. Si te atrasas, mira [[Si 
 ### [[2026-11-01|Dom 1 nov]]
 **Hito 1.** Al terminar, etiqueta de Git v0.1. Ver [[Hitos]].
 
-- [ ] Pantalla Nueva compra e historial de compras
-- [ ] Listo cuando: Registras productos y recibes mercancía
+- [x] Pantalla Nueva compra e historial de compras
+- [x] Listo cuando: Registras productos y recibes mercancía
 
 ## Semana 2 · Caja y ventas
 

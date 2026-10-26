@@ -239,21 +239,27 @@ export async function registrarCompra({
 
     await client.query('COMMIT');
 
-    await registrarAuditoria({
-      usuarioId,
-      accion: 'COMPRA_REGISTRAR',
-      entidad: 'compras',
-      entidadId: compra.id,
-      datosNuevos: {
-        suplidor_id: compra.suplidor_id,
-        suplidor_nombre: suplidor.nombre,
-        numero_factura_suplidor: compra.numero_factura_suplidor,
-        fecha: compra.fecha,
-        total,
-        total_items: lineas.length,
-      },
-      ip,
-    });
+    // La compra ya está confirmada: un fallo de auditoría no debe provocar
+    // ROLLBACK ni devolver error al cliente. Solo se registra en consola.
+    try {
+      await registrarAuditoria({
+        usuarioId,
+        accion: 'COMPRA_REGISTRAR',
+        entidad: 'compras',
+        entidadId: compra.id,
+        datosNuevos: {
+          suplidor_id: compra.suplidor_id,
+          suplidor_nombre: suplidor.nombre,
+          numero_factura_suplidor: compra.numero_factura_suplidor,
+          fecha: compra.fecha,
+          total,
+          total_items: lineas.length,
+        },
+        ip,
+      });
+    } catch (errorAuditoria) {
+      console.error('No se pudo registrar la auditoría de la compra', compra.id, errorAuditoria);
+    }
 
     return {
       id: compra.id,

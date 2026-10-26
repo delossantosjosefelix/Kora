@@ -10,6 +10,7 @@ import Catalogo from './pages/Catalogo.jsx';
 import CambiarPassword from './pages/CambiarPassword.jsx';
 import Usuarios from './pages/Usuarios.jsx';
 import Inventario from './pages/Inventario.jsx';
+import Compras from './pages/Compras.jsx';
 
 function destinoInicial(usuario) {
   return usuario?.debe_cambiar_password ? '/cambiar-password' : '/dashboard';
@@ -63,6 +64,14 @@ export default function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/catalogo" element={<Catalogo />} />
           <Route path="/inventario" element={<Inventario />} />
+          <Route
+            path="/compras"
+            element={
+              <RequireAuth roles={['Administrador', 'Gerente']}>
+                <Compras />
+              </RequireAuth>
+            }
+          />
           <Route
             path="/usuarios"
             element={
