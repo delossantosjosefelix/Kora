@@ -43,12 +43,7 @@ export default function Catalogo() {
   return (
     <div className="users-page">
       <div className="users-header">
-        <div>
-          <h1 className="users-title">Catálogo</h1>
-          <p className="page-subtitle">
-            Categorías y unidades de medida del catálogo.
-          </p>
-        </div>
+        <h1 className="users-title">Catálogo</h1>
 
         {puedeGestionar ? (
           <button
