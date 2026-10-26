@@ -800,8 +800,8 @@ export async function eliminarProducto(id, usuarioId, ip) {
         SELECT
           (SELECT COUNT(*)::int FROM detalle_ventas WHERE producto_id = $1) AS ventas_count,
           (SELECT COUNT(*)::int FROM detalle_compras WHERE producto_id = $1) AS compras_count,
+          (SELECT COUNT(*)::int FROM detalle_devoluciones WHERE producto_id = $1) AS devoluciones_count,
           (SELECT COUNT(*)::int FROM movimientos_inventario WHERE producto_id = $1) AS movimientos_count,
-          (SELECT COUNT(*)::int FROM historial_precios WHERE producto_id = $1) AS historial_count,
           (SELECT COALESCE(cantidad_actual, 0) FROM inventario WHERE producto_id = $1) AS stock_actual
       `,
       [id],
@@ -811,8 +811,8 @@ export async function eliminarProducto(id, usuarioId, ip) {
     const totalOperaciones =
       (row.ventas_count || 0) +
       (row.compras_count || 0) +
-      (row.movimientos_count || 0) +
-      (row.historial_count || 0);
+      (row.devoluciones_count || 0) +
+      (row.movimientos_count || 0);
 
     const stockActual = Number(row.stock_actual || 0);
 
@@ -824,6 +824,7 @@ export async function eliminarProducto(id, usuarioId, ip) {
     }
 
     await client.query('BEGIN');
+    await client.query('DELETE FROM historial_precios WHERE producto_id = $1', [id]);
     await client.query('DELETE FROM inventario WHERE producto_id = $1', [id]);
     await client.query('DELETE FROM productos WHERE id = $1', [id]);
     await client.query('COMMIT');

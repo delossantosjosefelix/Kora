@@ -37,3 +37,25 @@ export function formatearFechaHora(valor) {
     minute: '2-digit',
   }).format(fecha);
 }
+
+export function formatearMoneda(valor) {
+  const numero = Number(valor);
+  if (!Number.isFinite(numero)) return 'RD$0.00';
+
+  return new Intl.NumberFormat('es-DO', {
+    style: 'currency',
+    currency: 'DOP',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(numero);
+}
+
+export function formatearNumero(valor) {
+  const numero = Number(valor);
+  if (!Number.isFinite(numero)) return '0';
+
+  return new Intl.NumberFormat('es-DO', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(numero);
+}

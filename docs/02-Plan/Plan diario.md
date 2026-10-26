@@ -34,8 +34,8 @@ Antes de empezar un día, revisa la [[Rutina diaria]]. Si te atrasas, mira [[Si 
 - [x] Listo cuando: Crear y editar un producto por API con foto
 
 ### [[2026-10-28|Mié 28 oct]]
-- [ ] Pantalla Catálogo: lista, búsqueda y formulario
-- [ ] Listo cuando: El cajero no ve el costo y el administrador sí
+- [x] Pantalla Catálogo: lista, búsqueda y formulario
+- [x] Listo cuando: El cajero no ve el costo y el administrador sí
 
 ### [[2026-10-29|Jue 29 oct]]
 - [ ] Inventario: existencias y función central de movimientos en transacción

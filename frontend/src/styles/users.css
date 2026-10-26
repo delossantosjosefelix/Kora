@@ -1,8 +1,14 @@
 /* Vista de Usuarios con paleta oficial de Kora (Ambar y Slate) */
-.users-page {
+.users-page,
+.users-page-panel {
   display: flex;
   flex-direction: column;
   gap: 20px;
+}
+
+.users-page-panel[hidden],
+[hidden] {
+  display: none !important;
 }
 
 .users-header {
@@ -213,9 +219,21 @@
     background-color var(--transition);
 }
 
+.custom-select-wrap--form {
+  display: block;
+  width: 100%;
+}
+
 .custom-select-wrap--form .custom-select-trigger {
+  width: 100%;
   border-radius: var(--radius-sm);
   padding: 8px 12px;
+}
+
+.custom-select-wrap--form .custom-select-dropdown {
+  width: 100%;
+  left: 0;
+  right: 0;
 }
 
 .custom-select-trigger:hover:not(:disabled) {
@@ -522,6 +540,194 @@
 .pagination-btn:disabled {
   opacity: 0.35;
   cursor: not-allowed;
+}
+
+/* Estilos de productos en catalogo */
+.product-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 220px;
+}
+
+.product-thumbnail {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.product-thumbnail--placeholder {
+  display: grid;
+  place-items: center;
+  color: var(--color-text-muted);
+  background: var(--color-surface-muted);
+}
+
+.product-name {
+  color: var(--color-ink);
+  font-size: 0.92rem;
+  font-weight: 650;
+  line-height: 1.25;
+}
+
+.product-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}
+
+.product-code-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.price-main {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.price-sub {
+  font-size: 0.76rem;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.margin-tag {
+  display: inline-block;
+  font-size: 0.76rem;
+  color: #16a34a;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.margin-tag--negative {
+  color: var(--color-error);
+}
+
+/* Subida de imagen */
+.image-uploader {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px;
+  background: var(--color-surface-muted);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  transition: border-color var(--transition), background-color var(--transition);
+}
+
+.image-uploader:hover,
+.image-uploader--dragging {
+  border-color: var(--color-primary);
+  background: var(--color-surface);
+}
+
+.image-uploader-preview-btn {
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  display: block;
+  border-radius: var(--radius-sm);
+  line-height: 0;
+  transition: opacity var(--transition), transform var(--transition);
+}
+
+.image-uploader-preview-btn:hover {
+  opacity: 0.88;
+  transform: scale(1.02);
+}
+
+.image-uploader-preview {
+  width: 72px;
+  height: 72px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  flex-shrink: 0;
+  display: block;
+}
+
+.image-uploader-preview--placeholder {
+  display: grid;
+  place-items: center;
+  color: var(--color-text-muted);
+}
+
+.image-uploader-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.image-uploader-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+/* Desglose de ITBIS en vivo */
+.tax-breakdown-box {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.tax-breakdown-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tax-breakdown-label {
+  color: var(--color-text-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.tax-breakdown-value {
+  color: var(--color-ink);
+  font-weight: 650;
+  font-size: 0.88rem;
+}
+
+/* Imagen en modal de detalle */
+.detail-image-box {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 16px;
+}
+
+.detail-image {
+  max-width: 100%;
+  max-height: 220px;
+  border-radius: var(--radius-sm);
+  object-fit: contain;
 }
 
 @media (max-width: 768px) {

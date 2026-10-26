@@ -16,6 +16,7 @@ export default function CatalogoBar({
   filtroEstado,
   onCambiarFiltro,
   mostrarFiltro,
+  controlExtra,
   placeholderBusqueda,
   ariaLabelBusqueda,
 }) {
@@ -25,12 +26,23 @@ export default function CatalogoBar({
         <button
           type="button"
           role="tab"
+          aria-selected={tab === 'productos'}
+          className={`users-tab${tab === 'productos' ? ' users-tab--active' : ''}`}
+          onClick={() => onCambiarTab('productos')}
+        >
+          Productos
+          <span className="users-tab-count">{totales.productos ?? 0}</span>
+        </button>
+
+        <button
+          type="button"
+          role="tab"
           aria-selected={tab === 'categorias'}
           className={`users-tab${tab === 'categorias' ? ' users-tab--active' : ''}`}
           onClick={() => onCambiarTab('categorias')}
         >
           Categorías
-          <span className="users-tab-count">{totales.categorias}</span>
+          <span className="users-tab-count">{totales.categorias ?? 0}</span>
         </button>
 
         <button
@@ -41,7 +53,7 @@ export default function CatalogoBar({
           onClick={() => onCambiarTab('unidades')}
         >
           Unidades
-          <span className="users-tab-count">{totales.unidades}</span>
+          <span className="users-tab-count">{totales.unidades ?? 0}</span>
         </button>
       </div>
 
@@ -57,6 +69,8 @@ export default function CatalogoBar({
             aria-label={ariaLabelBusqueda}
           />
         </div>
+
+        {controlExtra}
 
         {mostrarFiltro ? (
           <CustomSelect
