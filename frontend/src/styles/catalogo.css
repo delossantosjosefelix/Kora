@@ -1,0 +1,29 @@
+/* Vista de Catalogo. Reutiliza la estructura visual de Usuarios. */
+.catalog-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.textarea--error {
+  border-color: var(--color-error);
+}
+
+.textarea--error:focus {
+  border-color: var(--color-error);
+  box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.12);
+}
+
+/* Truncamiento para descripciones largas en tablas con puntos suspensivos */
+.user-cell-info {
+  min-width: 0;
+  max-width: 320px;
+}
+
+.user-handle--truncate {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 280px;
+}

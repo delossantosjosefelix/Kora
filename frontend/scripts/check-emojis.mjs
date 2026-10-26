@@ -26,6 +26,7 @@ const IGNORAR = new Set([
   'coverage',
   '.git',
   '.agents',
+  '.obsidian',
   '.vite',
   'package-lock.json',
 ]);

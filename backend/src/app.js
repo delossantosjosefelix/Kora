@@ -4,8 +4,10 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import { authRouter } from './routes/auth.routes.js';
+import { categoriaRouter } from './routes/categoria.routes.js';
 import { healthRouter } from './routes/health.routes.js';
 import { rolesRouter } from './routes/roles.routes.js';
+import { unidadRouter } from './routes/unidad.routes.js';
 import { usuarioRouter } from './routes/usuario.routes.js';
 import { ErrorHttp } from './utils/ErrorHttp.js';
 
@@ -24,6 +26,8 @@ app.use(cookieParser());
 
 app.use('/api/health', healthRouter);
 app.use('/api/auth', authRouter);
+app.use('/api/categorias', categoriaRouter);
+app.use('/api/unidades', unidadRouter);
 app.use('/api/roles', rolesRouter);
 app.use('/api/usuarios', usuarioRouter);
 

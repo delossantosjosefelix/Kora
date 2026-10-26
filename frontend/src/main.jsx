@@ -11,6 +11,7 @@ import './styles/ui.css';
 import './styles/layout.css';
 import './styles/auth.css';
 import './styles/users.css';
+import './styles/catalogo.css';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

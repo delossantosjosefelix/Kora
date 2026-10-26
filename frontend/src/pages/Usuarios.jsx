@@ -7,6 +7,7 @@ import {
   AnglesRight,
   CheckCircle,
   Edit,
+  Eye,
   InfoCircle,
   Loader,
   Lock,
@@ -22,7 +23,7 @@ import CustomSelect from '../components/ui/CustomSelect.jsx';
 import { api } from '../services/api.js';
 import { useAuth } from '../hooks/useAuth.js';
 import notify from '../utils/notify.js';
-import { formatearFecha, iniciales } from '../utils/format.js';
+import { formatearFecha, formatearFechaHora, iniciales } from '../utils/format.js';
 
 const FORMULARIO_VACIO = {
   nombre: '',
@@ -52,6 +53,7 @@ export default function Usuarios() {
   const [pagina, setPagina] = useState(1);
   const [modalAbierto, setModalAbierto] = useState(false);
   const [editando, setEditando] = useState(null);
+  const [usuarioDetalle, setUsuarioDetalle] = useState(null);
   const [form, setForm] = useState(FORMULARIO_VACIO);
   const [errores, setErrores] = useState({});
   const [errorForm, setErrorForm] = useState('');
@@ -534,6 +536,16 @@ export default function Usuarios() {
                         <button
                           type="button"
                           className="icon-button"
+                          onClick={() => setUsuarioDetalle(usuario)}
+                          aria-label={`Ver detalles de ${usuario.nombre} ${usuario.apellido}`}
+                          title="Ver detalles"
+                        >
+                          <Eye size={17} />
+                        </button>
+
+                        <button
+                          type="button"
+                          className="icon-button"
                           onClick={() => abrirEditar(usuario)}
                           disabled={procesandoId === usuario.id}
                           aria-label={`Editar a ${usuario.nombre} ${usuario.apellido}`}
@@ -883,6 +895,100 @@ export default function Usuarios() {
             </div>
           ) : null}
         </form>
+      </Modal>
+
+      <Modal
+        abierto={Boolean(usuarioDetalle)}
+        onCerrar={() => setUsuarioDetalle(null)}
+        titulo="Detalles del usuario"
+        descripcion="Ficha informativa del usuario en el sistema."
+        footer={
+          <button
+            type="button"
+            className="button button--secondary"
+            onClick={() => setUsuarioDetalle(null)}
+          >
+            Cerrar
+          </button>
+        }
+      >
+        {usuarioDetalle ? (
+          <div>
+            <div className="detail-user-header">
+              <span className="detail-user-avatar" aria-hidden="true">
+                {iniciales(usuarioDetalle.nombre, usuarioDetalle.apellido)}
+              </span>
+              <div>
+                <div className="detail-user-name">
+                  <span>
+                    {usuarioDetalle.nombre} {usuarioDetalle.apellido}
+                  </span>
+                  {esAdminMaestro(usuarioDetalle) ? (
+                    <span
+                      className="system-lock-icon"
+                      title="Cuenta protegida de seguridad del sistema"
+                    >
+                      <Lock size={14} />
+                    </span>
+                  ) : null}
+                </div>
+                <span className="detail-user-handle">
+                  @{usuarioDetalle.username}
+                </span>
+              </div>
+            </div>
+
+            <div className="detail-grid">
+              <div className="detail-item">
+                <span className="detail-label">Rol asignado</span>
+                <span className="user-role-text">{usuarioDetalle.rol}</span>
+              </div>
+
+              <div className="detail-item">
+                <span className="detail-label">Estado</span>
+                <span
+                  className={`user-status-text ${usuarioDetalle.activo ? 'user-status-text--active' : 'user-status-text--inactive'}`}
+                >
+                  {usuarioDetalle.activo ? 'Activo' : 'Inactivo'}
+                </span>
+              </div>
+
+              <div className="detail-item">
+                <span className="detail-label">Contraseña</span>
+                <span
+                  className={`user-password-text ${usuarioDetalle.debe_cambiar_password ? 'user-password-text--warning' : 'user-password-text--ok'}`}
+                >
+                  {usuarioDetalle.debe_cambiar_password
+                    ? 'Temporal (debe cambiar)'
+                    : 'Al día'}
+                </span>
+              </div>
+
+              <div className="detail-item">
+                <span className="detail-label">Cuenta del sistema</span>
+                <span className="detail-value">
+                  {esAdminMaestro(usuarioDetalle)
+                    ? 'Sí (Seguridad Kora)'
+                    : 'No'}
+                </span>
+              </div>
+
+              <div className="detail-item">
+                <span className="detail-label">Último inicio de sesión</span>
+                <span className="detail-value">
+                  {formatearFechaHora(usuarioDetalle.ultimo_login)}
+                </span>
+              </div>
+
+              <div className="detail-item">
+                <span className="detail-label">Fecha de registro</span>
+                <span className="detail-value">
+                  {formatearFechaHora(usuarioDetalle.created_at)}
+                </span>
+              </div>
+            </div>
+          </div>
+        ) : null}
       </Modal>
     </div>
   );
