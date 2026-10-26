@@ -11,6 +11,7 @@ import { healthRouter } from './routes/health.routes.js';
 import { inventarioRouter } from './routes/inventario.routes.js';
 import { productoRouter } from './routes/producto.routes.js';
 import { rolesRouter } from './routes/roles.routes.js';
+import { suplidorRouter } from './routes/suplidor.routes.js';
 import { unidadRouter } from './routes/unidad.routes.js';
 import { usuarioRouter } from './routes/usuario.routes.js';
 import { ErrorHttp } from './utils/ErrorHttp.js';
@@ -44,6 +45,7 @@ app.use('/api/categorias', categoriaRouter);
 app.use('/api/unidades', unidadRouter);
 app.use('/api/productos', productoRouter);
 app.use('/api/inventario', inventarioRouter);
+app.use('/api/suplidores', suplidorRouter);
 app.use('/api/roles', rolesRouter);
 app.use('/api/usuarios', usuarioRouter);
 

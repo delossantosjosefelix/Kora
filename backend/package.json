@@ -8,7 +8,8 @@
   "scripts": {
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
-    "db:setup": "node src/scripts/db-setup.js"
+    "db:setup": "node src/scripts/db-setup.js",
+    "admin:restablecer": "node src/scripts/restablecer-admin.js"
   },
   "engines": {
     "node": ">=20"
