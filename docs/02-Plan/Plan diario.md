@@ -38,8 +38,8 @@ Antes de empezar un día, revisa la [[Rutina diaria]]. Si te atrasas, mira [[Si 
 - [x] Listo cuando: El cajero no ve el costo y el administrador sí
 
 ### [[2026-10-29|Jue 29 oct]]
-- [ ] Inventario: existencias y función central de movimientos en transacción
-- [ ] Listo cuando: Un movimiento actualiza el stock y deja registro
+- [x] Inventario: existencias y función central de movimientos en transacción
+- [x] Listo cuando: Un movimiento actualiza el stock y deja registro
 
 ### [[2026-10-30|Vie 30 oct]]
 - [ ] Suplidores y pantallas de Existencias y Movimientos

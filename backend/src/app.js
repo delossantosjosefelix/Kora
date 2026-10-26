@@ -8,6 +8,7 @@ import morgan from 'morgan';
 import { authRouter } from './routes/auth.routes.js';
 import { categoriaRouter } from './routes/categoria.routes.js';
 import { healthRouter } from './routes/health.routes.js';
+import { inventarioRouter } from './routes/inventario.routes.js';
 import { productoRouter } from './routes/producto.routes.js';
 import { rolesRouter } from './routes/roles.routes.js';
 import { unidadRouter } from './routes/unidad.routes.js';
@@ -42,6 +43,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/categorias', categoriaRouter);
 app.use('/api/unidades', unidadRouter);
 app.use('/api/productos', productoRouter);
+app.use('/api/inventario', inventarioRouter);
 app.use('/api/roles', rolesRouter);
 app.use('/api/usuarios', usuarioRouter);
 
