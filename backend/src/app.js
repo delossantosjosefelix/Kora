@@ -1,3 +1,5 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
@@ -6,10 +8,15 @@ import morgan from 'morgan';
 import { authRouter } from './routes/auth.routes.js';
 import { categoriaRouter } from './routes/categoria.routes.js';
 import { healthRouter } from './routes/health.routes.js';
+import { productoRouter } from './routes/producto.routes.js';
 import { rolesRouter } from './routes/roles.routes.js';
 import { unidadRouter } from './routes/unidad.routes.js';
 import { usuarioRouter } from './routes/usuario.routes.js';
 import { ErrorHttp } from './utils/ErrorHttp.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const UPLOADS_DIR = path.resolve(__dirname, '../uploads');
 
 export const app = express();
 
@@ -18,16 +25,23 @@ const origenesPermitidos = process.env.CORS_ORIGIN
   : false;
 
 app.disable('x-powered-by');
-app.use(helmet());
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+  }),
+);
 app.use(cors({ origin: origenesPermitidos, credentials: true }));
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 app.use(express.json({ limit: '1mb' }));
 app.use(cookieParser());
 
+app.use('/uploads', express.static(UPLOADS_DIR));
+
 app.use('/api/health', healthRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/categorias', categoriaRouter);
 app.use('/api/unidades', unidadRouter);
+app.use('/api/productos', productoRouter);
 app.use('/api/roles', rolesRouter);
 app.use('/api/usuarios', usuarioRouter);
 

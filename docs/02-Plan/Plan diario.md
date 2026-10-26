@@ -30,8 +30,8 @@ Antes de empezar un día, revisa la [[Rutina diaria]]. Si te atrasas, mira [[Si 
 - [x] Listo cuando: CRUD completo funcionando
 
 ### [[2026-10-27|Mar 27 oct]]
-- [ ] API de productos: tasa de ITBIS e imagen
-- [ ] Listo cuando: Crear y editar un producto por API con foto
+- [x] API de productos: tasa de ITBIS e imagen
+- [x] Listo cuando: Crear y editar un producto por API con foto
 
 ### [[2026-10-28|Mié 28 oct]]
 - [ ] Pantalla Catálogo: lista, búsqueda y formulario

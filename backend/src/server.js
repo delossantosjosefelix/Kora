@@ -29,3 +29,4 @@ async function cerrar(senal) {
 
 process.on('SIGINT', () => cerrar('SIGINT'));
 process.on('SIGTERM', () => cerrar('SIGTERM'));
+
