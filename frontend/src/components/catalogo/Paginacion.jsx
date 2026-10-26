@@ -6,30 +6,33 @@ import {
 } from 'reicon-react';
 
 export default function Paginacion({
-  pagina,
-  totalPaginas,
+  pagina = 1,
+  totalPaginas = 1,
   onCambiarPagina,
 }) {
-  if (totalPaginas <= 1) {
-    return null;
-  }
+  const total = Math.max(1, totalPaginas);
+  const paginaValida = Math.min(Math.max(1, pagina), total);
 
-  const numeros = Array.from({ length: totalPaginas }, (_, indice) => indice + 1)
+  const numeros = Array.from({ length: total }, (_, indice) => indice + 1)
     .filter(
       (numero) =>
-        Math.abs(numero - pagina) <= 2 ||
+        Math.abs(numero - paginaValida) <= 2 ||
         numero === 1 ||
-        numero === totalPaginas,
+        numero === total,
     );
 
   return (
     <div className="users-pagination-bar">
+      <span className="pagination-info">
+        Página {paginaValida} de {total}
+      </span>
+
       <div className="pagination-controls">
         <button
           type="button"
           className="pagination-btn"
           onClick={() => onCambiarPagina(1)}
-          disabled={pagina === 1}
+          disabled={paginaValida === 1}
           title="Primera página"
           aria-label="Primera página"
         >
@@ -39,8 +42,8 @@ export default function Paginacion({
         <button
           type="button"
           className="pagination-btn"
-          onClick={() => onCambiarPagina(Math.max(1, pagina - 1))}
-          disabled={pagina === 1}
+          onClick={() => onCambiarPagina(Math.max(1, paginaValida - 1))}
+          disabled={paginaValida === 1}
           title="Página anterior"
           aria-label="Página anterior"
         >
@@ -51,10 +54,10 @@ export default function Paginacion({
           <button
             key={numero}
             type="button"
-            className={`pagination-btn${numero === pagina ? ' pagination-btn--active' : ''}`}
+            className={`pagination-btn${numero === paginaValida ? ' pagination-btn--active' : ''}`}
             onClick={() => onCambiarPagina(numero)}
             aria-label={`Ir a la página ${numero}`}
-            aria-current={numero === pagina ? 'page' : undefined}
+            aria-current={numero === paginaValida ? 'page' : undefined}
           >
             {numero}
           </button>
@@ -63,8 +66,8 @@ export default function Paginacion({
         <button
           type="button"
           className="pagination-btn"
-          onClick={() => onCambiarPagina(Math.min(totalPaginas, pagina + 1))}
-          disabled={pagina === totalPaginas}
+          onClick={() => onCambiarPagina(Math.min(total, paginaValida + 1))}
+          disabled={paginaValida === total}
           title="Página siguiente"
           aria-label="Página siguiente"
         >
@@ -74,8 +77,8 @@ export default function Paginacion({
         <button
           type="button"
           className="pagination-btn"
-          onClick={() => onCambiarPagina(totalPaginas)}
-          disabled={pagina === totalPaginas}
+          onClick={() => onCambiarPagina(total)}
+          disabled={paginaValida === total}
           title="Última página"
           aria-label="Última página"
         >

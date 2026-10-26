@@ -478,11 +478,13 @@ const CategoriasPanel = forwardRef(function CategoriasPanel(
         </div>
       </div>
 
-      <Paginacion
-        pagina={paginaValida}
-        totalPaginas={totalPaginas}
-        onCambiarPagina={setPagina}
-      />
+      {categoriasFiltradas.length > 0 ? (
+        <Paginacion
+          pagina={paginaValida}
+          totalPaginas={totalPaginas}
+          onCambiarPagina={setPagina}
+        />
+      ) : null}
 
       <Modal
         abierto={modalAbierto}

@@ -619,6 +619,10 @@ export default function Usuarios() {
 
       {usuariosFiltrados.length > 0 ? (
         <div className="users-pagination-bar">
+          <span className="pagination-info">
+            Página {paginaValida} de {totalPaginas}
+          </span>
+
           <div className="pagination-controls">
             <button
               type="button"
