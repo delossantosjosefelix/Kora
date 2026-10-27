@@ -1,4 +1,4 @@
-import { ArchiveBox, Category, Home, ShoppingCart, Users } from 'reicon-react';
+import { ArchiveBox, Category, Home, ShoppingCart, Users, Vault } from 'reicon-react';
 
 /*
  * Elementos de navegación del menú lateral.
@@ -10,6 +10,12 @@ export const NAV_ITEMS = [
     path: '/dashboard',
     label: 'Panel',
     icon: Home,
+    roles: ['Administrador', 'Gerente', 'Cajero'],
+  },
+  {
+    path: '/caja',
+    label: 'Caja',
+    icon: Vault,
     roles: ['Administrador', 'Gerente', 'Cajero'],
   },
   {
