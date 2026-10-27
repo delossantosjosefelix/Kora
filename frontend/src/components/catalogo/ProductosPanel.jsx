@@ -13,7 +13,6 @@ import {
   CheckCircle,
   Edit,
   Eye,
-  Image as ImageIcon,
   Loader,
   Package,
   Search,
@@ -24,6 +23,8 @@ import {
 } from 'reicon-react';
 import Modal from '../ui/Modal.jsx';
 import CustomSelect from '../ui/CustomSelect.jsx';
+import FilterDrawer from '../ui/FilterDrawer.jsx';
+import InfoTooltip from '../ui/InfoTooltip.jsx';
 import CatalogoBar from './CatalogoBar.jsx';
 import Paginacion from './Paginacion.jsx';
 import { api } from '../../services/api.js';
@@ -35,6 +36,7 @@ import {
   formatearMoneda,
   formatearNumero,
 } from '../../utils/format.js';
+import { renderIcono } from '../../utils/iconosCatalogo.jsx';
 
 const TASAS_ITBIS = [
   { valor: '18', etiqueta: '18 % (Estándar)' },
@@ -56,7 +58,7 @@ const FORMULARIO_VACIO = {
   activo: true,
 };
 
-const POR_PAGINA = 8;
+const POR_PAGINA = 7;
 const MAX_TAMANO_IMAGEN_BYTES = 3 * 1024 * 1024; // 3 MB
 const TIPOS_IMAGEN_PERMITIDOS = ['image/jpeg', 'image/png', 'image/webp'];
 
@@ -79,7 +81,7 @@ function calcularDesglose(precioFinal, tasaItbis) {
 }
 
 const ProductosPanel = forwardRef(function ProductosPanel(
-  { tab, onCambiarTab, totales, onTotalChange },
+  { onTotalChange },
   ref,
 ) {
   const { esAdministrador, esGerente } = useAuth();
@@ -96,6 +98,24 @@ const ProductosPanel = forwardRef(function ProductosPanel(
   const [filtroEstado, setFiltroEstado] = useState('todos');
   const [filtroCategoria, setFiltroCategoria] = useState('');
   const [pagina, setPagina] = useState(1);
+  const [filtrosAbierto, setFiltrosAbierto] = useState(false);
+  const [vista, setVista] = useState(() => {
+    try {
+      return localStorage.getItem('kora_vista_productos') || 'tabla';
+    } catch {
+      return 'tabla';
+    }
+  });
+
+  const cambiarVista = (nueva) => {
+    setVista(nueva);
+    setPagina(1);
+    try {
+      localStorage.setItem('kora_vista_productos', nueva);
+    } catch {
+      // Silencioso
+    }
+  };
 
   const [modalAbierto, setModalAbierto] = useState(false);
   const [editando, setEditando] = useState(null);
@@ -163,7 +183,7 @@ const ProductosPanel = forwardRef(function ProductosPanel(
     onTotalChange?.(productos.length);
   }, [productos, onTotalChange]);
 
-  const abrirCrear = useCallback(() => {
+  const abrirCrear = useCallback(async () => {
     if (!puedeGestionar) return;
 
     setEditando(null);
@@ -174,6 +194,18 @@ const ProductosPanel = forwardRef(function ProductosPanel(
     setErrores({});
     setErrorForm('');
     setModalAbierto(true);
+
+    try {
+      const resp = await api.get('/productos/siguiente-codigo');
+      if (resp.ok && resp.datos?.siguienteCodigo) {
+        setForm((f) => ({
+          ...f,
+          codigo: f.codigo || resp.datos.siguienteCodigo,
+        }));
+      }
+    } catch {
+      // Si falla la consulta preliminar, el backend lo genera al guardar
+    }
   }, [puedeGestionar]);
 
   const abrirEditar = (prod) => {
@@ -301,23 +333,24 @@ const ProductosPanel = forwardRef(function ProductosPanel(
     });
   }, [productos, busqueda, filtroEstado, filtroCategoria]);
 
+  const porPagina = vista === 'tarjetas' ? 8 : 7;
   const totalPaginas = Math.max(
     1,
-    Math.ceil(productosFiltrados.length / POR_PAGINA),
+    Math.ceil(productosFiltrados.length / porPagina),
   );
   const paginaValida = Math.min(Math.max(1, pagina), totalPaginas);
 
   const productosPaginados = useMemo(() => {
-    const inicio = (paginaValida - 1) * POR_PAGINA;
-    return productosFiltrados.slice(inicio, inicio + POR_PAGINA);
-  }, [productosFiltrados, paginaValida]);
+    const inicio = (paginaValida - 1) * porPagina;
+    return productosFiltrados.slice(inicio, inicio + porPagina);
+  }, [productosFiltrados, paginaValida, porPagina]);
 
   const validarFormulario = () => {
     const nuevosErrores = {};
 
-    if (!form.codigo.trim()) {
+    if (editando && !form.codigo.trim()) {
       nuevosErrores.codigo = 'El código es obligatorio.';
-    } else if (form.codigo.trim().length > 30) {
+    } else if (form.codigo && form.codigo.trim().length > 30) {
       nuevosErrores.codigo = 'Máximo 30 caracteres.';
     }
 
@@ -506,10 +539,11 @@ const ProductosPanel = forwardRef(function ProductosPanel(
 
   const opcionesCategorias = useMemo(() => {
     return [
-      { valor: '', etiqueta: 'Todas las categorías' },
+      { valor: '', etiqueta: 'Todas Las Categorías' },
       ...categorias.map((c) => ({
         valor: String(c.id),
         etiqueta: c.nombre,
+        icono: renderIcono(c.icono, { size: 14 }),
       })),
     ];
   }, [categorias]);
@@ -524,239 +558,406 @@ const ProductosPanel = forwardRef(function ProductosPanel(
       ) : null}
 
       <CatalogoBar
-        tab={tab}
-        onCambiarTab={onCambiarTab}
-        totales={totales}
         busqueda={busqueda}
         onBuscar={(valor) => {
           setBusqueda(valor);
           setPagina(1);
         }}
-        filtroEstado={filtroEstado}
-        onCambiarFiltro={(valor) => {
-          setFiltroEstado(valor);
-          setPagina(1);
-        }}
-        mostrarFiltro={true}
-        controlExtra={
-          categorias.length > 0 ? (
-            <CustomSelect
-              valor={filtroCategoria}
-              onChange={(nuevo) => {
-                setFiltroCategoria(nuevo);
-                setPagina(1);
-              }}
-              placeholder="Todas las categorías"
-              opciones={opcionesCategorias}
-              aria-label="Filtrar por categoría"
-            />
-          ) : null
-        }
-        placeholderBusqueda="Buscar por nombre, código o categoría..."
+        placeholderBusqueda="Buscar Producto..."
         ariaLabelBusqueda="Buscar productos"
+        mostrarBotonFiltros={true}
+        totalFiltrosActivos={(filtroCategoria ? 1 : 0) + (filtroEstado !== 'todos' ? 1 : 0)}
+        onAbrirFiltros={() => setFiltrosAbierto(true)}
+        vista={vista}
+        onCambiarVista={cambiarVista}
+        mostrarSelectorVista={true}
       />
 
-      <div className="users-card">
-        <div className="users-table-wrap">
-          <table className="users-table">
-            <thead>
-              <tr>
-                <th>Producto</th>
-                <th>Categoría</th>
-                <th>Unidad</th>
-                <th>Precio (ITBIS inc.)</th>
-                {puedeVerCosto ? <th>Costo</th> : null}
-                <th>Estado</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {cargando ? (
+      {/* Drawer lateral derecho para filtros */}
+      <FilterDrawer
+        abierto={filtrosAbierto}
+        onCerrar={() => setFiltrosAbierto(false)}
+        titulo="Filtros De Productos"
+        totalFiltrosActivos={(filtroCategoria ? 1 : 0) + (filtroEstado !== 'todos' ? 1 : 0)}
+        onLimpiar={() => {
+          setFiltroCategoria('');
+          setFiltroEstado('todos');
+          setPagina(1);
+        }}
+        onAplicar={() => setPagina(1)}
+      >
+        <div className="filter-drawer-group">
+          <label className="filter-drawer-group-label" htmlFor="filtro-categoria-prod">
+            Categoría
+          </label>
+          <CustomSelect
+            id="filtro-categoria-prod"
+            className="custom-select-wrap--form"
+            valor={filtroCategoria}
+            onChange={(nuevo) => {
+              setFiltroCategoria(nuevo);
+              setPagina(1);
+            }}
+            placeholder="Todas Las Categorías"
+            opciones={opcionesCategorias}
+            aria-label="Filtrar por categoría"
+          />
+        </div>
+
+        <div className="filter-drawer-group">
+          <label className="filter-drawer-group-label" htmlFor="filtro-estado-prod">
+            Estado
+          </label>
+          <CustomSelect
+            id="filtro-estado-prod"
+            className="custom-select-wrap--form"
+            valor={filtroEstado}
+            onChange={(nuevo) => {
+              setFiltroEstado(nuevo);
+              setPagina(1);
+            }}
+            placeholder="Todos Los Estados"
+            opciones={[
+              { valor: 'todos', etiqueta: 'Todos Los Estados' },
+              { valor: 'activos', etiqueta: 'Activos' },
+              { valor: 'inactivos', etiqueta: 'Inactivos' },
+            ]}
+            aria-label="Filtrar por estado"
+          />
+        </div>
+      </FilterDrawer>
+
+      {vista === 'tabla' ? (
+        <div className="users-card">
+          <div className="users-table-wrap">
+            <table className="users-table users-table--compact">
+              <thead>
                 <tr>
-                  <td colSpan={puedeVerCosto ? 7 : 6}>
-                    <div className="loading-state">
-                      <Loader size={18} className="spin" />
-                      Cargando productos...
-                    </div>
-                  </td>
+                  <th>Producto</th>
+                  <th>Categoría</th>
+                  <th>Unidad</th>
+                  <th>Precio (ITBIS inc.)</th>
+                  {puedeVerCosto ? <th>Costo</th> : null}
+                  <th>Estado</th>
+                  <th>Acciones</th>
                 </tr>
-              ) : productosFiltrados.length === 0 ? (
-                <tr>
-                  <td colSpan={puedeVerCosto ? 7 : 6}>
-                    <div className="empty-state">
-                      <span className="empty-state-icon">
-                        {hayFiltros ? (
-                          <Search size={22} />
-                        ) : (
-                          <Package size={22} />
-                        )}
-                      </span>
-                      <h3>
-                        {hayFiltros
-                          ? 'Sin coincidencias'
-                          : 'Aún no hay productos en el catálogo'}
-                      </h3>
-                      <p>
-                        {hayFiltros
-                          ? 'Prueba modificando la búsqueda o los filtros aplicados.'
-                          : puedeGestionar
-                            ? 'Comienza registrando tu primer producto con su precio e imagen.'
-                            : 'No se encontraron productos disponibles para este rol.'}
-                      </p>
-                    </div>
-                  </td>
-                </tr>
-              ) : (
-                productosPaginados.map((prod) => (
-                  <tr key={prod.id}>
-                    <td>
-                      <div className="product-cell">
-                        <img
-                          src={prod.imagen_url || '/placeholder-producto.svg'}
-                          alt={prod.nombre}
-                          className="product-thumbnail"
-                          loading="lazy"
-                          onError={(e) => {
-                            e.currentTarget.onerror = null;
-                            e.currentTarget.src = '/placeholder-producto.svg';
-                          }}
-                        />
-                        <div>
-                          <div className="product-name">{prod.nombre}</div>
-                          <div className="product-meta">
-                            <span className="product-code-badge" title="Código interno">
-                              <Tag size={12} />
-                              {prod.codigo}
-                            </span>
-                            {prod.codigo_barras ? (
-                              <span className="product-code-badge" title="Código de barras">
-                                <Barcode size={12} />
-                                {prod.codigo_barras}
-                              </span>
-                            ) : null}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <span className="user-role-text">
-                        {prod.categoria_nombre || 'Sin categoría'}
-                      </span>
-                    </td>
-                    <td>
-                      <span className="table-muted">
-                        {prod.unidad_nombre} ({prod.unidad_abreviatura})
-                      </span>
-                    </td>
-                    <td>
-                      <div>
-                        <div className="price-main">
-                          {formatearMoneda(prod.precio_final)}
-                        </div>
-                        <div className="price-sub">
-                          ITBIS: {prod.tasa_itbis}% ({formatearMoneda(prod.monto_itbis)})
-                        </div>
-                      </div>
-                    </td>
-                    {puedeVerCosto ? (
-                      <td>
-                        <div>
-                          <div className="user-role-text">
-                            {prod.costo !== null && prod.costo !== undefined
-                              ? formatearMoneda(prod.costo)
-                              : '-'}
-                          </div>
-                          {prod.margen_bruto !== null ? (
-                            <div
-                              className={`margin-tag${prod.margen_bruto < 0 ? ' margin-tag--negative' : ''}`}
-                            >
-                              Margen: {formatearMoneda(prod.margen_bruto)}
-                              {prod.porcentaje_margen !== null
-                                ? ` (${prod.porcentaje_margen}%)`
-                                : ''}
-                            </div>
-                          ) : null}
-                        </div>
-                      </td>
-                    ) : null}
-                    <td>
-                      <span
-                        className={`user-status-text ${prod.activo ? 'user-status-text--active' : 'user-status-text--inactive'}`}
-                      >
-                        {prod.activo ? 'Activo' : 'Inactivo'}
-                      </span>
-                    </td>
-                    <td>
-                      <div className="table-actions">
-                        <button
-                          type="button"
-                          className="icon-button"
-                          onClick={() => setProductoDetalle(prod)}
-                          aria-label={`Ver detalles de ${prod.nombre}`}
-                          title="Ver detalles"
-                        >
-                          <Eye size={17} />
-                        </button>
-
-                        {puedeGestionar ? (
-                          <>
-                            <button
-                              type="button"
-                              className="icon-button"
-                              onClick={() => abrirEditar(prod)}
-                              disabled={procesandoId === prod.id}
-                              aria-label={`Editar ${prod.nombre}`}
-                              title="Editar producto"
-                            >
-                              <Edit size={17} />
-                            </button>
-
-                            <button
-                              type="button"
-                              className={`icon-button${prod.activo ? ' icon-button--danger' : ''}`}
-                              onClick={() => alternarActivo(prod)}
-                              disabled={procesandoId === prod.id}
-                              aria-label={
-                                prod.activo
-                                  ? `Desactivar ${prod.nombre}`
-                                  : `Activar ${prod.nombre}`
-                              }
-                              title={
-                                prod.activo
-                                  ? 'Desactivar producto'
-                                  : 'Activar producto'
-                              }
-                            >
-                              {procesandoId === prod.id ? (
-                                <Loader size={16} className="spin" />
-                              ) : prod.activo ? (
-                                <XCircle size={17} />
-                              ) : (
-                                <CheckCircle size={17} />
-                              )}
-                            </button>
-
-                            <button
-                              type="button"
-                              className="icon-button icon-button--danger"
-                              onClick={() => manejarEliminar(prod)}
-                              disabled={procesandoId === prod.id}
-                              aria-label={`Eliminar ${prod.nombre}`}
-                              title="Eliminar producto"
-                            >
-                              <Trash size={16} />
-                            </button>
-                          </>
-                        ) : null}
+              </thead>
+              <tbody>
+                {cargando ? (
+                  <tr>
+                    <td colSpan={puedeVerCosto ? 7 : 6}>
+                      <div className="loading-state">
+                        <Loader size={18} className="spin" />
+                        Cargando productos...
                       </div>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : productosFiltrados.length === 0 ? (
+                  <tr>
+                    <td colSpan={puedeVerCosto ? 7 : 6}>
+                      <div className="empty-state">
+                        <span className="empty-state-icon">
+                          {hayFiltros ? (
+                            <Search size={22} />
+                          ) : (
+                            <Package size={22} />
+                          )}
+                        </span>
+                        <h3>
+                          {hayFiltros
+                            ? 'Sin coincidencias'
+                            : 'Aún no hay productos en el catálogo'}
+                        </h3>
+                        <p>
+                          {hayFiltros
+                            ? 'Prueba modificando la búsqueda o los filtros aplicados.'
+                            : puedeGestionar
+                              ? 'Comienza registrando tu primer producto con su precio e imagen.'
+                              : 'No se encontraron productos disponibles para este rol.'}
+                        </p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  productosPaginados.map((prod) => (
+                    <tr key={prod.id}>
+                      <td>
+                        <div
+                          className="product-cell product-cell--interactive"
+                          onClick={() => setProductoDetalle(prod)}
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') setProductoDetalle(prod);
+                          }}
+                          title="Ver detalles del producto"
+                        >
+                          <img
+                            src={prod.imagen_url || '/placeholder-producto.svg'}
+                            alt={prod.nombre}
+                            className="product-thumbnail"
+                            loading="lazy"
+                            onError={(e) => {
+                              e.currentTarget.onerror = null;
+                              e.currentTarget.src = '/placeholder-producto.svg';
+                            }}
+                          />
+                          <div>
+                            <div className="product-name">{prod.nombre}</div>
+                            <div className="product-meta">
+                              <span className="product-code-badge" title="Código interno">
+                                <Tag size={12} />
+                                {prod.codigo}
+                              </span>
+                              {prod.codigo_barras ? (
+                                <span className="product-code-badge" title="Código de barras">
+                                  <Barcode size={12} />
+                                  {prod.codigo_barras}
+                                </span>
+                              ) : null}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <span className="user-role-text">
+                          {prod.categoria_nombre || 'Sin categoría'}
+                        </span>
+                      </td>
+                      <td>
+                        <span className="table-muted">
+                          {prod.unidad_nombre} ({prod.unidad_abreviatura})
+                        </span>
+                      </td>
+                      <td>
+                        <div>
+                          <div className="price-main">
+                            {formatearMoneda(prod.precio_final)}
+                          </div>
+                          <div className="price-sub">
+                            ITBIS: {prod.tasa_itbis}% ({formatearMoneda(prod.monto_itbis)})
+                          </div>
+                        </div>
+                      </td>
+                      {puedeVerCosto ? (
+                        <td>
+                          <div>
+                            <div className="user-role-text">
+                              {prod.costo !== null && prod.costo !== undefined
+                                ? formatearMoneda(prod.costo)
+                                : '-'}
+                            </div>
+                            {prod.margen_bruto !== null ? (
+                              <div
+                                className={`margin-tag${prod.margen_bruto < 0 ? ' margin-tag--negative' : ''}`}
+                              >
+                                Margen: {formatearMoneda(prod.margen_bruto)}
+                                {prod.porcentaje_margen !== null
+                                  ? ` (${prod.porcentaje_margen}%)`
+                                  : ''}
+                              </div>
+                            ) : null}
+                          </div>
+                        </td>
+                      ) : null}
+                      <td>
+                        <span
+                          className={`user-status-text ${prod.activo ? 'user-status-text--active' : 'user-status-text--inactive'}`}
+                        >
+                          {prod.activo ? 'Activo' : 'Inactivo'}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="table-actions">
+                          <button
+                            type="button"
+                            className="icon-button"
+                            onClick={() => setProductoDetalle(prod)}
+                            aria-label={`Ver detalles de ${prod.nombre}`}
+                            title="Ver detalles"
+                          >
+                            <Eye size={17} />
+                          </button>
+
+                          {puedeGestionar ? (
+                            <>
+                              <button
+                                type="button"
+                                className="icon-button"
+                                onClick={() => abrirEditar(prod)}
+                                disabled={procesandoId === prod.id}
+                                aria-label={`Editar ${prod.nombre}`}
+                                title="Editar producto"
+                              >
+                                <Edit size={17} />
+                              </button>
+
+                              <button
+                                type="button"
+                                className={`icon-button${prod.activo ? ' icon-button--danger' : ''}`}
+                                onClick={() => alternarActivo(prod)}
+                                disabled={procesandoId === prod.id}
+                                aria-label={
+                                  prod.activo
+                                    ? `Desactivar ${prod.nombre}`
+                                    : `Activar ${prod.nombre}`
+                                }
+                                title={
+                                  prod.activo
+                                    ? 'Desactivar producto'
+                                    : 'Activar producto'
+                                }
+                              >
+                                {procesandoId === prod.id ? (
+                                  <Loader size={16} className="spin" />
+                                ) : prod.activo ? (
+                                  <XCircle size={17} />
+                                ) : (
+                                  <CheckCircle size={17} />
+                                )}
+                              </button>
+
+                              <button
+                                type="button"
+                                className="icon-button icon-button--danger"
+                                onClick={() => manejarEliminar(prod)}
+                                disabled={procesandoId === prod.id}
+                                aria-label={`Eliminar ${prod.nombre}`}
+                                title="Eliminar producto"
+                              >
+                                <Trash size={16} />
+                              </button>
+                            </>
+                          ) : null}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div>
+          {cargando ? (
+            <div className="products-card-grid">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={`skel-card-${i}`} className="product-grid-card">
+                  <div className="skeleton" style={{ width: '100%', aspectRatio: '1/1', borderRadius: '6px' }} />
+                  <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div className="skeleton skeleton--text" style={{ width: '80%' }} />
+                    <div className="skeleton skeleton--text" style={{ width: '50%' }} />
+                  </div>
+                  <div style={{ marginTop: '14px', paddingTop: '10px', borderTop: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between' }}>
+                    <div className="skeleton skeleton--text" style={{ width: '60px' }} />
+                    <div className="skeleton skeleton--btn" style={{ width: '32px', height: '32px' }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : productosFiltrados.length === 0 ? (
+            <div className="users-card">
+              <div className="empty-state">
+                <span className="empty-state-icon">
+                  {hayFiltros ? (
+                    <Search size={22} />
+                  ) : (
+                    <Package size={22} />
+                  )}
+                </span>
+                <h3>
+                  {hayFiltros
+                    ? 'Sin Coincidencias'
+                    : 'Aún No Hay Productos En El Catálogo'}
+                </h3>
+                <p>
+                  {hayFiltros
+                    ? 'Prueba modificando la búsqueda o los filtros aplicados.'
+                    : puedeGestionar
+                      ? 'Comienza registrando tu primer producto con su precio e imagen.'
+                      : 'No se encontraron productos disponibles para este rol.'}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="products-card-grid">
+              {productosPaginados.map((prod) => (
+                <div key={prod.id} className="product-grid-card">
+                  <div
+                    className="product-grid-card__image-box"
+                    onClick={() => setProductoDetalle(prod)}
+                    title="Ver detalles del producto"
+                  >
+                    <img
+                      src={prod.imagen_url || '/placeholder-producto.svg'}
+                      alt={prod.nombre}
+                      className="product-grid-card__image"
+                      loading="lazy"
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = '/placeholder-producto.svg';
+                      }}
+                    />
+                    <span
+                      className={`product-status-dot ${
+                        prod.activo ? 'product-status-dot--active' : 'product-status-dot--inactive'
+                      }`}
+                      title={prod.activo ? 'Producto Activo' : 'Producto Inactivo'}
+                    />
+                  </div>
+
+                  <div className="product-grid-card__body">
+                    <h3
+                      className="product-grid-card__title"
+                      onClick={() => setProductoDetalle(prod)}
+                      title={prod.nombre}
+                    >
+                      {prod.nombre}
+                    </h3>
+
+                    <div className="product-grid-card__meta">
+                      <div className="product-grid-card__meta-item">
+                        <span>Código:</span>
+                        <span className="product-grid-card__code">{prod.codigo}</span>
+                      </div>
+                      <div className="product-grid-card__meta-item">
+                        <span>Categoría:</span>
+                        <span>{prod.categoria_nombre || 'Sin categoría'}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="product-grid-card__footer">
+                    <div className="product-grid-card__price-box">
+                      <span className="product-grid-card__price">
+                        {formatearMoneda(prod.precio_final)}
+                      </span>
+                      {Number(prod.tasa_itbis) > 0 ? (
+                        <span className="product-grid-card__price-sub">
+                          ITBIS {prod.tasa_itbis}%
+                        </span>
+                      ) : null}
+                    </div>
+
+                    <div className="product-grid-card__actions">
+                      <button
+                        type="button"
+                        className="icon-button"
+                        onClick={() => setProductoDetalle(prod)}
+                        aria-label={`Ver detalles de ${prod.nombre}`}
+                        title="Ver Detalles"
+                      >
+                        <Eye size={16} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {productosFiltrados.length > 0 ? (
         <Paginacion
@@ -770,12 +971,8 @@ const ProductosPanel = forwardRef(function ProductosPanel(
       <Modal
         abierto={modalAbierto}
         onCerrar={cerrarModal}
-        titulo={editando ? 'Editar producto' : 'Nuevo producto'}
-        descripcion={
-          editando
-            ? 'Actualiza los datos, precios, categoría o imagen del producto.'
-            : 'Registra un nuevo producto con su tasa de ITBIS y fotografía.'
-        }
+        titulo={editando ? 'Editar Producto' : 'Nuevo Producto'}
+        tamano="md"
         footer={
           <>
             <button
@@ -798,9 +995,9 @@ const ProductosPanel = forwardRef(function ProductosPanel(
                   Guardando...
                 </>
               ) : editando ? (
-                'Guardar cambios'
+                'Guardar Cambios'
               ) : (
-                'Crear producto'
+                'Crear Producto'
               )}
             </button>
           </>
@@ -809,7 +1006,7 @@ const ProductosPanel = forwardRef(function ProductosPanel(
         <form
           id="form-producto"
           onSubmit={guardar}
-          className="form-stack"
+          className="form-stack form-stack--compact"
           noValidate
         >
           {errorForm ? (
@@ -930,281 +1127,294 @@ const ProductosPanel = forwardRef(function ProductosPanel(
             </div>
           </div>
 
-          <div className="field-grid">
-            <div className="field">
-              <label htmlFor="prod-codigo">Código interno *</label>
-              <input
-                id="prod-codigo"
-                type="text"
-                className={`input${errores.codigo ? ' input--error' : ''}`}
-                value={form.codigo}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, codigo: e.target.value }))
-                }
-                placeholder="Ej. PROD-001"
-                maxLength={30}
-                required
-              />
-              {errores.codigo ? (
-                <span className="field-error">{errores.codigo}</span>
-              ) : null}
-            </div>
-
-            <div className="field">
-              <label htmlFor="prod-codigo-barras">Código de barras</label>
-              <input
-                id="prod-codigo-barras"
-                type="text"
-                className={`input${errores.codigo_barras ? ' input--error' : ''}`}
-                value={form.codigo_barras}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, codigo_barras: e.target.value }))
-                }
-                placeholder="Ej. 7461234567890"
-                maxLength={50}
-              />
-              {errores.codigo_barras ? (
-                <span className="field-error">{errores.codigo_barras}</span>
-              ) : null}
-            </div>
-          </div>
-
-          <div className="field">
-            <label htmlFor="prod-nombre">Nombre del producto *</label>
-            <input
-              id="prod-nombre"
-              type="text"
-              className={`input${errores.nombre ? ' input--error' : ''}`}
-              value={form.nombre}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, nombre: e.target.value }))
-              }
-              placeholder="Ej. Arroz Premium 5 lbs"
-              maxLength={120}
-              required
-            />
-            {errores.nombre ? (
-              <span className="field-error">{errores.nombre}</span>
-            ) : null}
-          </div>
-
-          <div className="field-grid">
-            <div className="field">
-              <label htmlFor="prod-categoria">Categoría *</label>
-              <CustomSelect
-                id="prod-categoria"
-                className="custom-select-wrap--form"
-                valor={form.categoria_id}
-                onChange={(val) => {
-                  setForm((f) => ({ ...f, categoria_id: val }));
-                  setErrores((e) => ({ ...e, categoria_id: '' }));
-                  setErrorForm('');
-                }}
-                placeholder="Selecciona una categoría..."
-                opciones={categorias.map((c) => ({
-                  valor: String(c.id),
-                  etiqueta: c.nombre,
-                }))}
-                error={Boolean(errores.categoria_id)}
-                aria-label="Categoría del producto"
-              />
-              {errores.categoria_id ? (
-                <span className="field-error">{errores.categoria_id}</span>
-              ) : null}
-            </div>
-
-            <div className="field">
-              <label htmlFor="prod-unidad">Unidad de medida *</label>
-              <CustomSelect
-                id="prod-unidad"
-                className="custom-select-wrap--form"
-                valor={form.unidad_id}
-                onChange={(val) => {
-                  setForm((f) => ({ ...f, unidad_id: val }));
-                  setErrores((e) => ({ ...e, unidad_id: '' }));
-                  setErrorForm('');
-                }}
-                placeholder="Selecciona una unidad..."
-                opciones={unidades.map((u) => ({
-                  valor: String(u.id),
-                  etiqueta: `${u.nombre} (${u.abreviatura})`,
-                }))}
-                error={Boolean(errores.unidad_id)}
-                aria-label="Unidad de medida del producto"
-              />
-              {errores.unidad_id ? (
-                <span className="field-error">{errores.unidad_id}</span>
-              ) : null}
-            </div>
-          </div>
-
-          <div className="field-grid">
-            <div className="field">
-              <label htmlFor="prod-precio">Precio final (con ITBIS) *</label>
-              <input
-                id="prod-precio"
-                type="number"
-                step="0.01"
-                min="0"
-                className={`input${errores.precio_final ? ' input--error' : ''}`}
-                value={form.precio_final}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, precio_final: e.target.value }))
-                }
-                placeholder="0.00"
-                required
-              />
-              {errores.precio_final ? (
-                <span className="field-error">{errores.precio_final}</span>
-              ) : null}
-            </div>
-
-            <div className="field">
-              <label htmlFor="prod-tasa-itbis">Tasa de ITBIS *</label>
-              <CustomSelect
-                id="prod-tasa-itbis"
-                className="custom-select-wrap--form"
-                valor={form.tasa_itbis}
-                onChange={(val) =>
-                  setForm((f) => ({ ...f, tasa_itbis: val }))
-                }
-                opciones={TASAS_ITBIS}
-                aria-label="Tasa de ITBIS"
-              />
-            </div>
-          </div>
-
-          {/* Desglose de ITBIS en vivo */}
-          <div className="tax-breakdown-box">
-            <div className="tax-breakdown-item">
-              <span className="tax-breakdown-label">Precio base</span>
-              <span className="tax-breakdown-value">
-                {formatearMoneda(desgloseForm.base)}
-              </span>
-            </div>
-            <div className="tax-breakdown-item">
-              <span className="tax-breakdown-label">ITBIS ({form.tasa_itbis}%)</span>
-              <span className="tax-breakdown-value">
-                {formatearMoneda(desgloseForm.itbis)}
-              </span>
-            </div>
-            <div className="tax-breakdown-item">
-              <span className="tax-breakdown-label">Total a cobrar</span>
-              <span className="tax-breakdown-value">
-                {formatearMoneda(form.precio_final || 0)}
-              </span>
-            </div>
-          </div>
-
-          {puedeVerCosto ? (
+          {/* Bloque 1: Identificación */}
+          <div className="form-section">
+            <span className="form-section-title">Identificación</span>
             <div className="field-grid">
               <div className="field">
-                <label htmlFor="prod-costo">Costo de compra</label>
+                <label htmlFor="prod-codigo">Código Interno</label>
                 <input
-                  id="prod-costo"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  className={`input${errores.costo ? ' input--error' : ''}`}
-                  value={form.costo}
+                  id="prod-codigo"
+                  type="text"
+                  className={`input${errores.codigo ? ' input--error' : ''}`}
+                  value={form.codigo}
                   onChange={(e) =>
-                    setForm((f) => ({ ...f, costo: e.target.value }))
+                    setForm((f) => ({ ...f, codigo: e.target.value }))
                   }
-                  placeholder="0.00"
+                  placeholder="Ej. PROD-0001 (Automático si se deja vacío)"
+                  maxLength={30}
                 />
-                <span className="field-hint">
-                  Visible solo para administración y gerencia.
-                </span>
-                {errores.costo ? (
-                  <span className="field-error">{errores.costo}</span>
+                {errores.codigo ? (
+                  <span className="field-error">{errores.codigo}</span>
                 ) : null}
               </div>
 
               <div className="field">
-                <span className="field-label">Margen estimado</span>
-                <div className="tax-breakdown-box" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
-                  <div className="tax-breakdown-item">
-                    <span className="tax-breakdown-label">Ganancia</span>
-                    <span
-                      className="tax-breakdown-value"
-                      style={{
-                        color: margenForm && margenForm.ganancia < 0 ? 'var(--color-error)' : '#16a34a',
-                      }}
-                    >
-                      {margenForm ? formatearMoneda(margenForm.ganancia) : '-'}
-                    </span>
-                  </div>
-                  <div className="tax-breakdown-item">
-                    <span className="tax-breakdown-label">Rentabilidad</span>
-                    <span
-                      className="tax-breakdown-value"
-                      style={{
-                        color: margenForm && margenForm.ganancia < 0 ? 'var(--color-error)' : '#16a34a',
-                      }}
-                    >
-                      {margenForm && margenForm.porcentaje !== null
-                        ? `${margenForm.porcentaje.toFixed(1)}%`
-                        : '-'}
-                    </span>
-                  </div>
-                </div>
+                <label htmlFor="prod-codigo-barras">Código de barras</label>
+                <input
+                  id="prod-codigo-barras"
+                  type="text"
+                  className={`input${errores.codigo_barras ? ' input--error' : ''}`}
+                  value={form.codigo_barras}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, codigo_barras: e.target.value }))
+                  }
+                  placeholder="Ej. 7461234567890"
+                  maxLength={50}
+                />
+                {errores.codigo_barras ? (
+                  <span className="field-error">{errores.codigo_barras}</span>
+                ) : null}
               </div>
             </div>
-          ) : null}
 
-          <div className="field-grid">
             <div className="field">
-              <label htmlFor="prod-stock-minimo">Stock mínimo de alerta</label>
+              <label htmlFor="prod-nombre">Nombre del producto *</label>
               <input
-                id="prod-stock-minimo"
-                type="number"
-                min="0"
-                step="1"
-                className="input"
-                value={form.stock_minimo}
+                id="prod-nombre"
+                type="text"
+                className={`input${errores.nombre ? ' input--error' : ''}`}
+                value={form.nombre}
                 onChange={(e) =>
-                  setForm((f) => ({
-                    ...f,
-                    stock_minimo: Math.max(0, parseInt(e.target.value, 10) || 0),
-                  }))
+                  setForm((f) => ({ ...f, nombre: e.target.value }))
                 }
+                placeholder="Ej. Arroz Premium 5 lbs"
+                maxLength={120}
+                required
               />
-              <span className="field-hint">
-                Alerta cuando las existencias alcancen este nivel.
-              </span>
+              {errores.nombre ? (
+                <span className="field-error">{errores.nombre}</span>
+              ) : null}
             </div>
 
-            <div className="field">
-              <span className="field-label">Estado</span>
-              <label className="checkbox-label" style={{ marginTop: '10px' }}>
-                <input
-                  type="checkbox"
-                  checked={form.activo}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, activo: e.target.checked }))
-                  }
+            <div className="field-grid">
+              <div className="field">
+                <label htmlFor="prod-categoria">Categoría *</label>
+                <CustomSelect
+                  id="prod-categoria"
+                  className="custom-select-wrap--form"
+                  valor={form.categoria_id}
+                  onChange={(val) => {
+                    setForm((f) => ({ ...f, categoria_id: val }));
+                    setErrores((e) => ({ ...e, categoria_id: '' }));
+                    setErrorForm('');
+                  }}
+                  placeholder="Selecciona una categoría..."
+                  opciones={categorias.map((c) => ({
+                    valor: String(c.id),
+                    etiqueta: c.nombre,
+                    icono: renderIcono(c.icono, { size: 14 }),
+                  }))}
+                  error={Boolean(errores.categoria_id)}
+                  aria-label="Categoría del producto"
                 />
-                <span>Producto activo y disponible para venta</span>
-              </label>
+                {errores.categoria_id ? (
+                  <span className="field-error">{errores.categoria_id}</span>
+                ) : null}
+              </div>
+
+              <div className="field">
+                <label htmlFor="prod-unidad">Unidad de medida *</label>
+                <CustomSelect
+                  id="prod-unidad"
+                  className="custom-select-wrap--form"
+                  valor={form.unidad_id}
+                  onChange={(val) => {
+                    setForm((f) => ({ ...f, unidad_id: val }));
+                    setErrores((e) => ({ ...e, unidad_id: '' }));
+                    setErrorForm('');
+                  }}
+                  placeholder="Selecciona una unidad..."
+                  opciones={unidades.map((u) => ({
+                    valor: String(u.id),
+                    etiqueta: `${u.nombre} (${u.abreviatura})`,
+                    icono: renderIcono(u.icono, { size: 14 }, Package),
+                  }))}
+                  error={Boolean(errores.unidad_id)}
+                  aria-label="Unidad de medida del producto"
+                />
+                {errores.unidad_id ? (
+                  <span className="field-error">{errores.unidad_id}</span>
+                ) : null}
+              </div>
             </div>
           </div>
 
-          <div className="field">
-            <label htmlFor="prod-descripcion">Descripción o notas</label>
-            <textarea
-              id="prod-descripcion"
-              className="textarea"
-              rows={3}
-              value={form.descripcion}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, descripcion: e.target.value }))
-              }
-              placeholder="Detalles sobre presentación, marca o empaque..."
-              maxLength={500}
-            />
-            {errores.descripcion ? (
-              <span className="field-error">{errores.descripcion}</span>
+          {/* Bloque 2: Precios e impuestos */}
+          <div className="form-section">
+            <span className="form-section-title">Precios e impuestos</span>
+            <div className="field-grid">
+              <div className="field">
+                <label htmlFor="prod-precio">Precio final (con ITBIS) *</label>
+                <input
+                  id="prod-precio"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  className={`input${errores.precio_final ? ' input--error' : ''}`}
+                  value={form.precio_final}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, precio_final: e.target.value }))
+                  }
+                  placeholder="0.00"
+                  required
+                />
+                {errores.precio_final ? (
+                  <span className="field-error">{errores.precio_final}</span>
+                ) : null}
+              </div>
+
+              <div className="field">
+                <label htmlFor="prod-tasa-itbis">Tasa de ITBIS *</label>
+                <CustomSelect
+                  id="prod-tasa-itbis"
+                  className="custom-select-wrap--form"
+                  valor={form.tasa_itbis}
+                  onChange={(val) =>
+                    setForm((f) => ({ ...f, tasa_itbis: val }))
+                  }
+                  opciones={TASAS_ITBIS}
+                  aria-label="Tasa de ITBIS"
+                />
+              </div>
+            </div>
+
+            {/* Desglose de ITBIS en vivo */}
+            <div className="tax-breakdown-box">
+              <div className="tax-breakdown-item">
+                <span className="tax-breakdown-label">Precio base</span>
+                <span className="tax-breakdown-value">
+                  {formatearMoneda(desgloseForm.base)}
+                </span>
+              </div>
+              <div className="tax-breakdown-item">
+                <span className="tax-breakdown-label">ITBIS ({form.tasa_itbis}%)</span>
+                <span className="tax-breakdown-value">
+                  {formatearMoneda(desgloseForm.itbis)}
+                </span>
+              </div>
+              <div className="tax-breakdown-item">
+                <span className="tax-breakdown-label">Total a cobrar</span>
+                <span className="tax-breakdown-value">
+                  {formatearMoneda(form.precio_final || 0)}
+                </span>
+              </div>
+            </div>
+
+            {puedeVerCosto ? (
+              <div className="field-grid">
+                <div className="field">
+                  <label htmlFor="prod-costo" className="label-with-hint">
+                    <span>Costo de compra</span>
+                    <InfoTooltip texto="Visible solo para administración y gerencia." />
+                  </label>
+                  <input
+                    id="prod-costo"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    className={`input${errores.costo ? ' input--error' : ''}`}
+                    value={form.costo}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, costo: e.target.value }))
+                    }
+                    placeholder="0.00"
+                  />
+                  {errores.costo ? (
+                    <span className="field-error">{errores.costo}</span>
+                  ) : null}
+                </div>
+
+                <div className="field">
+                  <span className="field-label">Margen estimado</span>
+                  <div className="tax-breakdown-box" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
+                    <div className="tax-breakdown-item">
+                      <span className="tax-breakdown-label">Ganancia</span>
+                      <span
+                        className="tax-breakdown-value"
+                        style={{
+                          color: margenForm && margenForm.ganancia < 0 ? 'var(--color-error)' : '#16a34a',
+                        }}
+                      >
+                        {margenForm ? formatearMoneda(margenForm.ganancia) : '-'}
+                      </span>
+                    </div>
+                    <div className="tax-breakdown-item">
+                      <span className="tax-breakdown-label">Rentabilidad</span>
+                      <span
+                        className="tax-breakdown-value"
+                        style={{
+                          color: margenForm && margenForm.ganancia < 0 ? 'var(--color-error)' : '#16a34a',
+                        }}
+                      >
+                        {margenForm && margenForm.porcentaje !== null
+                          ? `${margenForm.porcentaje.toFixed(1)}%`
+                          : '-'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             ) : null}
+          </div>
+
+          {/* Bloque 3: Inventario y estado */}
+          <div className="form-section">
+            <span className="form-section-title">Inventario y estado</span>
+            <div className="field-grid">
+              <div className="field">
+                <label htmlFor="prod-stock-minimo" className="label-with-hint">
+                  <span>Stock mínimo de alerta</span>
+                  <InfoTooltip texto="Alerta cuando las existencias alcancen este nivel." />
+                </label>
+                <input
+                  id="prod-stock-minimo"
+                  type="number"
+                  min="0"
+                  step="1"
+                  className="input"
+                  value={form.stock_minimo}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      stock_minimo: Math.max(0, parseInt(e.target.value, 10) || 0),
+                    }))
+                  }
+                />
+              </div>
+
+              <div className="field">
+                <span className="field-label">Estado</span>
+                <label className="checkbox-label" style={{ marginTop: '10px' }}>
+                  <input
+                    type="checkbox"
+                    checked={form.activo}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, activo: e.target.checked }))
+                    }
+                  />
+                  <span>Activo</span>
+                </label>
+              </div>
+            </div>
+
+            <div className="field">
+              <label htmlFor="prod-descripcion">Descripción o notas</label>
+              <textarea
+                id="prod-descripcion"
+                className="textarea"
+                rows={3}
+                value={form.descripcion}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, descripcion: e.target.value }))
+                }
+                placeholder="Detalles sobre presentación, marca o empaque..."
+                maxLength={500}
+              />
+              {errores.descripcion ? (
+                <span className="field-error">{errores.descripcion}</span>
+              ) : null}
+            </div>
           </div>
         </form>
       </Modal>
@@ -1213,16 +1423,32 @@ const ProductosPanel = forwardRef(function ProductosPanel(
       <Modal
         abierto={Boolean(productoDetalle)}
         onCerrar={() => setProductoDetalle(null)}
-        titulo="Detalle del producto"
-        descripcion="Información completa, imagen y parámetros fiscales del producto."
+        titulo="Detalle Del Producto"
+        tamano="md"
         footer={
-          <button
-            type="button"
-            className="button button--secondary"
-            onClick={() => setProductoDetalle(null)}
-          >
-            Cerrar
-          </button>
+          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', width: '100%' }}>
+            <button
+              type="button"
+              className="button button--secondary"
+              onClick={() => setProductoDetalle(null)}
+            >
+              Cerrar
+            </button>
+            {puedeGestionar && productoDetalle ? (
+              <button
+                type="button"
+                className="button button--primary"
+                onClick={() => {
+                  const prod = productoDetalle;
+                  setProductoDetalle(null);
+                  abrirEditar(prod);
+                }}
+              >
+                <Edit size={16} />
+                Editar Producto
+              </button>
+            ) : null}
+          </div>
         }
       >
         {productoDetalle ? (
@@ -1242,7 +1468,7 @@ const ProductosPanel = forwardRef(function ProductosPanel(
             <div className="detail-grid">
               <div className="detail-item detail-item--full">
                 <span className="detail-label">Nombre del producto</span>
-                <span className="detail-value" style={{ fontSize: '1.05rem', fontWeight: 700 }}>
+                <span className="detail-value" style={{ fontSize: '1.05rem', fontWeight: 600 }}>
                   {productoDetalle.nombre}
                 </span>
               </div>
@@ -1275,7 +1501,7 @@ const ProductosPanel = forwardRef(function ProductosPanel(
 
               <div className="detail-item">
                 <span className="detail-label">Precio final (con ITBIS)</span>
-                <span className="detail-value" style={{ fontWeight: 700, color: 'var(--color-primary-hover)' }}>
+                <span className="detail-value" style={{ fontWeight: 600, color: 'var(--color-primary-hover)' }}>
                   {formatearMoneda(productoDetalle.precio_final)}
                 </span>
               </div>
@@ -1351,12 +1577,14 @@ const ProductosPanel = forwardRef(function ProductosPanel(
                 </span>
               </div>
 
-              <div className="detail-item detail-item--full">
-                <span className="detail-label">Descripción</span>
-                <div className="detail-value detail-value--box">
-                  {productoDetalle.descripcion || 'Sin descripción adicional.'}
+              {productoDetalle.descripcion ? (
+                <div className="detail-item detail-item--full">
+                  <span className="detail-label">Descripción</span>
+                  <div className="detail-value detail-value--box">
+                    {productoDetalle.descripcion}
+                  </div>
                 </div>
-              </div>
+              ) : null}
 
               <div className="detail-item">
                 <span className="detail-label">Fecha de registro</span>

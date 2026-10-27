@@ -18,23 +18,27 @@ import {
   XCircle,
 } from 'reicon-react';
 import Modal from '../ui/Modal.jsx';
+import CustomSelect from '../ui/CustomSelect.jsx';
+import IconPicker from '../ui/IconPicker.jsx';
 import CatalogoBar from './CatalogoBar.jsx';
 import Paginacion from './Paginacion.jsx';
 import { api } from '../../services/api.js';
 import { useAuth } from '../../hooks/useAuth.js';
 import notify from '../../utils/notify.js';
 import { mensajeError } from '../../utils/apiError.js';
+import { renderIcono } from '../../utils/iconosCatalogo.jsx';
 
 const FORMULARIO_VACIO = {
   nombre: '',
   descripcion: '',
+  icono: 'Tag',
   activo: true,
 };
 
-const POR_PAGINA = 8;
+const POR_PAGINA = 7;
 
 const CategoriasPanel = forwardRef(function CategoriasPanel(
-  { tab, onCambiarTab, totales, onTotalChange },
+  { onTotalChange },
   ref,
 ) {
   const { esAdministrador, esGerente } = useAuth();
@@ -114,6 +118,7 @@ const CategoriasPanel = forwardRef(function CategoriasPanel(
     setForm({
       nombre: categoria.nombre ?? '',
       descripcion: categoria.descripcion ?? '',
+      icono: categoria.icono ?? 'Tag',
       activo: Boolean(categoria.activo),
     });
     setErrores({});
@@ -167,7 +172,11 @@ const CategoriasPanel = forwardRef(function CategoriasPanel(
     setErrorForm('');
 
     try {
-      const cuerpo = { nombre, descripcion };
+      const cuerpo = {
+        nombre,
+        descripcion,
+        icono: form.icono || 'Tag',
+      };
 
       if (editando) {
         cuerpo.activo = form.activo;
@@ -316,27 +325,36 @@ const CategoriasPanel = forwardRef(function CategoriasPanel(
       ) : null}
 
       <CatalogoBar
-        tab={tab}
-        onCambiarTab={onCambiarTab}
-        totales={totales}
         busqueda={busqueda}
         onBuscar={(valor) => {
           setBusqueda(valor);
           setPagina(1);
         }}
-        filtroEstado={filtroEstado}
-        onCambiarFiltro={(valor) => {
-          setFiltroEstado(valor);
-          setPagina(1);
-        }}
-        mostrarFiltro={puedeGestionar}
-        placeholderBusqueda="Buscar categorías..."
+        placeholderBusqueda="Buscar Categoría..."
         ariaLabelBusqueda="Buscar categorías"
+        controlExtra={
+          puedeGestionar ? (
+            <CustomSelect
+              valor={filtroEstado}
+              onChange={(nuevo) => {
+                setFiltroEstado(nuevo);
+                setPagina(1);
+              }}
+              placeholder="Todos Los Estados"
+              opciones={[
+                { valor: 'todos', etiqueta: 'Todos Los Estados' },
+                { valor: 'activos', etiqueta: 'Activas' },
+                { valor: 'inactivos', etiqueta: 'Inactivas' },
+              ]}
+              aria-label="Filtrar por estado"
+            />
+          ) : null
+        }
       />
 
       <div className="users-card">
         <div className="users-table-wrap">
-          <table className="users-table">
+          <table className="users-table users-table--compact">
             <thead>
               <tr>
                 <th>Nombre / Descripción</th>
@@ -382,9 +400,18 @@ const CategoriasPanel = forwardRef(function CategoriasPanel(
                 categoriasPaginadas.map((categoria) => (
                   <tr key={categoria.id}>
                     <td>
-                      <div className="user-cell">
+                      <div
+                        className="user-cell user-cell--interactive"
+                        onClick={() => setCategoriaDetalle(categoria)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') setCategoriaDetalle(categoria);
+                        }}
+                        title="Ver detalles de la categoría"
+                      >
                         <span className="user-avatar" aria-hidden="true">
-                          <Category size={18} />
+                          {renderIcono(categoria.icono, { size: 18 })}
                         </span>
                         <div className="user-cell-info">
                           <div className="user-name">{categoria.nombre}</div>
@@ -489,12 +516,8 @@ const CategoriasPanel = forwardRef(function CategoriasPanel(
       <Modal
         abierto={modalAbierto}
         onCerrar={cerrarModal}
-        titulo={editando ? 'Editar categoría' : 'Nueva categoría'}
-        descripcion={
-          editando
-            ? 'Actualiza el nombre, la descripción o el estado.'
-            : 'Crea una categoría para agrupar productos.'
-        }
+        titulo={editando ? 'Editar Categoría' : 'Nueva Categoría'}
+        tamano="md"
         footer={
           <>
             <button
@@ -517,9 +540,9 @@ const CategoriasPanel = forwardRef(function CategoriasPanel(
                   Guardando...
                 </>
               ) : editando ? (
-                'Guardar cambios'
+                'Guardar Cambios'
               ) : (
-                'Crear categoría'
+                'Crear Categoría'
               )}
             </button>
           </>
@@ -527,7 +550,7 @@ const CategoriasPanel = forwardRef(function CategoriasPanel(
       >
         <form
           id="form-categoria"
-          className="form-stack"
+          className="form-stack form-stack--compact"
           onSubmit={manejarGuardar}
           noValidate
         >
@@ -539,6 +562,18 @@ const CategoriasPanel = forwardRef(function CategoriasPanel(
           ) : null}
 
           <div className="field-grid">
+            <div className="field field--full">
+              <IconPicker
+                label="Icono Representativo"
+                valor={form.icono || 'Tag'}
+                onChange={(nuevoIcono) =>
+                  setForm((f) => ({ ...f, icono: nuevoIcono }))
+                }
+                fallbackIcon="Tag"
+                disabled={guardando}
+              />
+            </div>
+
             <div className="field field--full">
               <label htmlFor="categoria-nombre">Nombre</label>
               <input
@@ -603,24 +638,51 @@ const CategoriasPanel = forwardRef(function CategoriasPanel(
       <Modal
         abierto={Boolean(categoriaDetalle)}
         onCerrar={() => setCategoriaDetalle(null)}
-        titulo="Detalles de la categoría"
-        descripcion="Ficha informativa de la categoría seleccionada."
+        titulo="Detalle De La Categoría"
+        tamano="md"
         footer={
-          <button
-            type="button"
-            className="button button--secondary"
-            onClick={() => setCategoriaDetalle(null)}
-          >
-            Cerrar
-          </button>
+          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', width: '100%' }}>
+            <button
+              type="button"
+              className="button button--secondary"
+              onClick={() => setCategoriaDetalle(null)}
+            >
+              Cerrar
+            </button>
+            {puedeGestionar && categoriaDetalle ? (
+              <button
+                type="button"
+                className="button button--primary"
+                onClick={() => {
+                  const cat = categoriaDetalle;
+                  setCategoriaDetalle(null);
+                  abrirEditar(cat);
+                }}
+              >
+                <Edit size={16} />
+                Editar Categoría
+              </button>
+            ) : null}
+          </div>
         }
       >
         {categoriaDetalle ? (
-          <div className="detail-grid">
-            <div className="detail-item">
-              <span className="detail-label">Nombre</span>
-              <span className="detail-value">{categoriaDetalle.nombre}</span>
+          <div>
+            <div className="detail-user-header">
+              <span className="detail-user-avatar" aria-hidden="true">
+                {renderIcono(categoriaDetalle.icono, { size: 22 })}
+              </span>
+              <div>
+                <div className="detail-user-name">{categoriaDetalle.nombre}</div>
+                <div className="detail-user-handle">Categoría de productos</div>
+              </div>
             </div>
+
+            <div className="detail-grid">
+              <div className="detail-item">
+                <span className="detail-label">Nombre</span>
+                <span className="detail-value">{categoriaDetalle.nombre}</span>
+              </div>
 
             <div className="detail-item">
               <span className="detail-label">Estado</span>
@@ -631,11 +693,14 @@ const CategoriasPanel = forwardRef(function CategoriasPanel(
               </span>
             </div>
 
-            <div className="detail-item detail-item--full">
-              <span className="detail-label">Descripción</span>
-              <div className="detail-value detail-value--box">
-                {categoriaDetalle.descripcion || 'Sin descripción registrada.'}
+            {categoriaDetalle.descripcion ? (
+              <div className="detail-item detail-item--full">
+                <span className="detail-label">Descripción</span>
+                <div className="detail-value detail-value--box">
+                  {categoriaDetalle.descripcion}
+                </div>
               </div>
+            ) : null}
             </div>
           </div>
         ) : null}

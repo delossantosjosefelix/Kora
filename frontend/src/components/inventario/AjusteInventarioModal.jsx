@@ -1,20 +1,20 @@
 import { useState, useEffect, useMemo } from 'react';
-import { AlertCircle, Loader } from 'reicon-react';
+import { AlertCircle, Loader, Tag } from 'reicon-react';
 import Modal from '../ui/Modal.jsx';
 import CustomSelect from '../ui/CustomSelect.jsx';
 import { api } from '../../services/api.js';
 import notify from '../../utils/notify.js';
 import { mensajeError } from '../../utils/apiError.js';
-import { formatearNumero } from '../../utils/format.js';
+import { formatearEntero } from '../../utils/format.js';
 
 const OPCIONES_TIPO = [
-  { valor: 'AJUSTE', etiqueta: 'Ajuste manual de existencias' },
-  { valor: 'MERMA', etiqueta: 'Merma (daño, rotura o pérdida)' },
+  { valor: 'AJUSTE', etiqueta: 'Ajuste Manual De Existencias' },
+  { valor: 'MERMA', etiqueta: 'Merma (Daño, Rotura O Pérdida)' },
 ];
 
 const OPCIONES_MODO = [
-  { valor: 'VARIACION', etiqueta: 'Por variación (+ / - unidades)' },
-  { valor: 'OBJETIVO', etiqueta: 'Por conteo físico directo (stock final)' },
+  { valor: 'VARIACION', etiqueta: 'Por Variación (+ / - Unidades)' },
+  { valor: 'OBJETIVO', etiqueta: 'Por Conteo Físico Directo (Stock Final)' },
 ];
 
 export default function AjusteInventarioModal({
@@ -48,34 +48,45 @@ export default function AjusteInventarioModal({
   }, [abierto, productoSeleccionado]);
 
   const productoActual = useMemo(() => {
+    if (
+      productoSeleccionado &&
+      String(productoSeleccionado.producto_id || productoSeleccionado.id) === String(productoId)
+    ) {
+      return productoSeleccionado;
+    }
     if (!productoId) return null;
     return productos.find(
       (p) => String(p.producto_id || p.id) === String(productoId),
     );
-  }, [productoId, productos]);
+  }, [productoId, productos, productoSeleccionado]);
 
-  const stockActual = Number(productoActual?.stock_actual ?? 0);
+  const stockActual = Math.round(Number(productoActual?.stock_actual ?? 0));
 
   const calculo = useMemo(() => {
     if (!productoActual) return { delta: 0, resultante: 0, valido: false };
 
     if (modo === 'OBJETIVO') {
-      const objetivoNum = Number(stockObjetivo);
-      if (stockObjetivo === '' || !Number.isFinite(objetivoNum) || objetivoNum < 0) {
+      const valStr = String(stockObjetivo).trim();
+      if (valStr === '' || !/^\d+$/.test(valStr)) {
         return { delta: 0, resultante: stockActual, valido: false };
       }
-      const delta = Number((objetivoNum - stockActual).toFixed(3));
+      const objetivoNum = parseInt(valStr, 10);
+      const delta = objetivoNum - stockActual;
       return { delta, resultante: objetivoNum, valido: delta !== 0 };
     }
 
     // Modo VARIACION
-    const variacionNum = Number(variacion);
-    if (variacion === '' || !Number.isFinite(variacionNum) || variacionNum === 0) {
+    const valStr = String(variacion).trim();
+    if (valStr === '' || !/^-?\d+$/.test(valStr)) {
+      return { delta: 0, resultante: stockActual, valido: false };
+    }
+    const variacionNum = parseInt(valStr, 10);
+    if (variacionNum === 0) {
       return { delta: 0, resultante: stockActual, valido: false };
     }
 
     const deltaAplicado = tipo === 'MERMA' ? -Math.abs(variacionNum) : variacionNum;
-    const resultante = Number((stockActual + deltaAplicado).toFixed(3));
+    const resultante = stockActual + deltaAplicado;
     return {
       delta: deltaAplicado,
       resultante,
@@ -97,22 +108,30 @@ export default function AjusteInventarioModal({
     }
 
     if (modo === 'OBJETIVO') {
-      const objetivoNum = Number(stockObjetivo);
-      if (stockObjetivo === '' || !Number.isFinite(objetivoNum)) {
+      const valStr = String(stockObjetivo).trim();
+      if (!valStr) {
         nuevosErrores.stockObjetivo = 'Ingresa el stock físico resultante.';
-      } else if (objetivoNum < 0) {
-        nuevosErrores.stockObjetivo = 'El stock no puede ser negativo.';
-      } else if (objetivoNum === stockActual) {
-        nuevosErrores.stockObjetivo = 'El stock objetivo es igual al actual; no hay variación.';
+      } else if (!/^\d+$/.test(valStr)) {
+        nuevosErrores.stockObjetivo = 'Solo se permiten números enteros positivos o cero.';
+      } else {
+        const objetivoNum = parseInt(valStr, 10);
+        if (objetivoNum === stockActual) {
+          nuevosErrores.stockObjetivo = 'El stock objetivo es igual al actual; no hay variación.';
+        }
       }
     } else {
-      const variacionNum = Number(variacion);
-      if (variacion === '' || !Number.isFinite(variacionNum)) {
-        nuevosErrores.variacion = 'Ingresa una cantidad numérica.';
-      } else if (variacionNum === 0) {
-        nuevosErrores.variacion = 'La cantidad no puede ser cero.';
-      } else if (calculo.resultante < 0) {
-        nuevosErrores.variacion = `Stock insuficiente. La reducción máxima es ${stockActual}.`;
+      const valStr = String(variacion).trim();
+      if (!valStr) {
+        nuevosErrores.variacion = 'Ingresa una cantidad entera.';
+      } else if (!/^-?\d+$/.test(valStr)) {
+        nuevosErrores.variacion = 'Solo se permiten números enteros (sin decimales).';
+      } else {
+        const variacionNum = parseInt(valStr, 10);
+        if (variacionNum === 0) {
+          nuevosErrores.variacion = 'La cantidad no puede ser cero.';
+        } else if (calculo.resultante < 0) {
+          nuevosErrores.variacion = `Stock insuficiente. La reducción máxima es ${stockActual}.`;
+        }
       }
     }
 
@@ -136,9 +155,9 @@ export default function AjusteInventarioModal({
       };
 
       if (modo === 'OBJETIVO') {
-        cuerpo.stock_resultante_objetivo = Number(stockObjetivo);
+        cuerpo.stock_resultante_objetivo = parseInt(stockObjetivo, 10);
       } else {
-        cuerpo.cantidad = tipo === 'MERMA' ? Math.abs(Number(variacion)) : Number(variacion);
+        cuerpo.cantidad = tipo === 'MERMA' ? Math.abs(parseInt(variacion, 10)) : parseInt(variacion, 10);
       }
 
       const respuesta = await api.post('/inventario/ajuste', cuerpo);
@@ -169,7 +188,7 @@ export default function AjusteInventarioModal({
       { valor: '', etiqueta: 'Selecciona un producto...' },
       ...productos.map((p) => ({
         valor: String(p.producto_id || p.id),
-        etiqueta: `${p.nombre} (${p.codigo}) - Actual: ${formatearNumero(p.stock_actual)} ${p.unidad_abreviatura || ''}`,
+        etiqueta: `${p.nombre} (${p.codigo}) - Actual: ${formatearEntero(p.stock_actual)} ${p.unidad_abreviatura || ''}`,
       })),
     ];
   }, [productos]);
@@ -178,8 +197,8 @@ export default function AjusteInventarioModal({
     <Modal
       abierto={abierto}
       onCerrar={onCerrar}
-      titulo={tipo === 'MERMA' ? 'Registrar merma o pérdida' : 'Ajustar existencias'}
-      descripcion="Ajusta el inventario por conteo físico o registra mermas justificadas."
+      titulo={tipo === 'MERMA' ? 'Registrar Merma o Pérdida' : 'Ajustar Existencias'}
+      tamano="md"
       footer={
         <>
           <button
@@ -202,9 +221,9 @@ export default function AjusteInventarioModal({
                 Registrando...
               </>
             ) : tipo === 'MERMA' ? (
-              'Confirmar merma'
+              'Confirmar Merma'
             ) : (
-              'Guardar ajuste'
+              'Guardar Ajuste'
             )}
           </button>
         </>
@@ -213,7 +232,7 @@ export default function AjusteInventarioModal({
       <form
         id="form-ajuste-inventario"
         onSubmit={guardar}
-        className="form-stack"
+        className="form-stack form-stack--compact"
         noValidate
       >
         {errorForm ? (
@@ -223,29 +242,98 @@ export default function AjusteInventarioModal({
           </div>
         ) : null}
 
-        <div className="field">
-          <label htmlFor="ajuste-producto">Producto a ajustar *</label>
-          <CustomSelect
-            id="ajuste-producto"
-            className="custom-select-wrap--form"
-            valor={productoId}
-            onChange={(val) => {
-              setProductoId(val);
-              setErrores((e) => ({ ...e, productoId: '' }));
-            }}
-            placeholder="Selecciona un producto..."
-            opciones={opcionesProductos}
-            error={Boolean(errores.productoId)}
-            aria-label="Producto a ajustar"
-          />
-          {errores.productoId ? (
-            <span className="field-error">{errores.productoId}</span>
-          ) : null}
-        </div>
+        {/* Muestra el producto de manera simple y clara */}
+        {productoSeleccionado && productoActual ? (
+          <div className="product-summary-card">
+            <img
+              src={productoActual.imagen_url || '/placeholder-producto.svg'}
+              alt={productoActual.nombre}
+              className="product-thumbnail"
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = '/placeholder-producto.svg';
+              }}
+            />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div className="product-name" style={{ fontSize: '0.94rem' }}>
+                {productoActual.nombre}
+              </div>
+              <div className="product-meta">
+                <span className="product-code-badge" title="Código interno">
+                  <Tag size={12} />
+                  {productoActual.codigo}
+                </span>
+                {productoActual.categoria_nombre ? (
+                  <span>{productoActual.categoria_nombre}</span>
+                ) : null}
+              </div>
+            </div>
+            <div style={{ textAlign: 'right', flexShrink: 0 }}>
+              <span className="field-hint" style={{ display: 'block' }}>Stock actual</span>
+              <span style={{ fontWeight: 750, fontSize: '1.05rem', color: 'var(--color-ink)' }}>
+                {formatearEntero(stockActual)} {productoActual.unidad_abreviatura || ''}
+              </span>
+            </div>
+          </div>
+        ) : (
+          <div className="field">
+            <label htmlFor="ajuste-producto">Producto A Ajustar *</label>
+            <CustomSelect
+              id="ajuste-producto"
+              className="custom-select-wrap--form"
+              valor={productoId}
+              onChange={(val) => {
+                setProductoId(val);
+                setErrores((e) => ({ ...e, productoId: '' }));
+              }}
+              placeholder="Seleccionar Producto..."
+              opciones={opcionesProductos}
+              error={Boolean(errores.productoId)}
+              aria-label="Producto a ajustar"
+            />
+            {errores.productoId ? (
+              <span className="field-error">{errores.productoId}</span>
+            ) : null}
+
+            {productoActual ? (
+              <div className="product-summary-card" style={{ marginTop: '8px' }}>
+                <img
+                  src={productoActual.imagen_url || '/placeholder-producto.svg'}
+                  alt={productoActual.nombre}
+                  className="product-thumbnail"
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = '/placeholder-producto.svg';
+                  }}
+                />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className="product-name" style={{ fontSize: '0.94rem' }}>
+                    {productoActual.nombre}
+                  </div>
+                  <div className="product-meta">
+                    <span className="product-code-badge" title="Código interno">
+                      <Tag size={12} />
+                      {productoActual.codigo}
+                    </span>
+                    {productoActual.categoria_nombre ? (
+                      <span>{productoActual.categoria_nombre}</span>
+                    ) : null}
+                  </div>
+                </div>
+                <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                  <span className="field-hint" style={{ display: 'block' }}>Stock Actual</span>
+                  <span style={{ fontWeight: 750, color: 'var(--color-ink)' }}>
+                    {formatearEntero(stockActual)} {productoActual.unidad_abreviatura || ''}
+                  </span>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        )}
 
         <div className="field-grid">
           <div className="field">
-            <label htmlFor="ajuste-tipo">Tipo de operación *</label>
+            <label htmlFor="ajuste-tipo">Tipo De Operación *</label>
             <CustomSelect
               id="ajuste-tipo"
               className="custom-select-wrap--form"
@@ -262,7 +350,7 @@ export default function AjusteInventarioModal({
           </div>
 
           <div className="field">
-            <label htmlFor="ajuste-modo">Método de cálculo *</label>
+            <label htmlFor="ajuste-modo">Método De Cálculo *</label>
             <CustomSelect
               id="ajuste-modo"
               className="custom-select-wrap--form"
@@ -270,7 +358,7 @@ export default function AjusteInventarioModal({
               onChange={(val) => setModo(val)}
               opciones={
                 tipo === 'MERMA'
-                  ? [{ valor: 'VARIACION', etiqueta: 'Cantidad perdida o dañada' }]
+                  ? [{ valor: 'VARIACION', etiqueta: 'Cantidad Perdida O Dañada' }]
                   : OPCIONES_MODO
               }
               aria-label="Método de cálculo"
@@ -286,21 +374,27 @@ export default function AjusteInventarioModal({
             <input
               id="ajuste-stock-objetivo"
               type="number"
-              step="0.001"
+              step="1"
               min="0"
               className={`input${errores.stockObjetivo ? ' input--error' : ''}`}
               value={stockObjetivo}
-              onChange={(e) => setStockObjetivo(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val.includes('.') || val.includes(',')) return;
+                setStockObjetivo(val);
+                setErrores((prev) => ({ ...prev, stockObjetivo: '' }));
+              }}
+              onKeyDown={(e) => {
+                if (e.key === '.' || e.key === ',' || e.key === 'e' || e.key === 'E') {
+                  e.preventDefault();
+                }
+              }}
               placeholder="Ej. 50"
               required
             />
             {errores.stockObjetivo ? (
               <span className="field-error">{errores.stockObjetivo}</span>
-            ) : (
-              <span className="field-hint">
-                Indica la cantidad real contada. El sistema calculará la diferencia exacta.
-              </span>
-            )}
+            ) : null}
           </div>
         ) : (
           <div className="field">
@@ -312,22 +406,27 @@ export default function AjusteInventarioModal({
             <input
               id="ajuste-variacion"
               type="number"
-              step="0.001"
+              step="1"
+              min={tipo === 'MERMA' ? '1' : undefined}
               className={`input${errores.variacion ? ' input--error' : ''}`}
               value={variacion}
-              onChange={(e) => setVariacion(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val.includes('.') || val.includes(',')) return;
+                setVariacion(val);
+                setErrores((prev) => ({ ...prev, variacion: '' }));
+              }}
+              onKeyDown={(e) => {
+                if (e.key === '.' || e.key === ',' || e.key === 'e' || e.key === 'E') {
+                  e.preventDefault();
+                }
+              }}
               placeholder={tipo === 'MERMA' ? 'Ej. 3' : 'Ej. +10 o -5'}
               required
             />
             {errores.variacion ? (
               <span className="field-error">{errores.variacion}</span>
-            ) : (
-              <span className="field-hint">
-                {tipo === 'MERMA'
-                  ? 'Cantidad física que se descontará por pérdida o daño.'
-                  : 'Ingresa un número positivo para aumentar o negativo para reducir.'}
-              </span>
-            )}
+            ) : null}
           </div>
         )}
 
@@ -336,7 +435,7 @@ export default function AjusteInventarioModal({
           <div className="tax-breakdown-item">
             <span className="tax-breakdown-label">Stock actual</span>
             <span className="tax-breakdown-value">
-              {formatearNumero(stockActual)} {productoActual?.unidad_abreviatura || ''}
+              {formatearEntero(stockActual)} {productoActual?.unidad_abreviatura || ''}
             </span>
           </div>
 
@@ -353,7 +452,7 @@ export default function AjusteInventarioModal({
                       : 'inherit',
               }}
             >
-              {calculo.delta > 0 ? `+${formatearNumero(calculo.delta)}` : formatearNumero(calculo.delta)}{' '}
+              {calculo.delta > 0 ? `+${formatearEntero(calculo.delta)}` : formatearEntero(calculo.delta)}{' '}
               {productoActual?.unidad_abreviatura || ''}
             </span>
           </div>
@@ -363,14 +462,14 @@ export default function AjusteInventarioModal({
             <span
               className="tax-breakdown-value"
               style={{
-                fontWeight: 700,
+                fontWeight: 600,
                 color:
                   calculo.resultante <= 0
                     ? 'var(--color-error)'
                     : 'var(--color-ink)',
               }}
             >
-              {formatearNumero(calculo.resultante)} {productoActual?.unidad_abreviatura || ''}
+              {formatearEntero(calculo.resultante)} {productoActual?.unidad_abreviatura || ''}
             </span>
           </div>
         </div>
@@ -380,21 +479,17 @@ export default function AjusteInventarioModal({
           <textarea
             id="ajuste-motivo"
             className={`textarea${errores.motivo ? ' textarea--error' : ''}`}
-            rows={3}
+            rows={2}
             value={motivo}
             onChange={(e) => setMotivo(e.target.value)}
             placeholder="Ej. Conteo físico fin de mes, rotura de empaque en estantería..."
             maxLength={200}
             required
           />
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2px' }}>
             {errores.motivo ? (
               <span className="field-error">{errores.motivo}</span>
-            ) : (
-              <span className="field-hint">
-                Obligatorio para auditoría y control contable.
-              </span>
-            )}
+            ) : <span />}
             <span className="field-hint">{motivo.length} / 200</span>
           </div>
         </div>

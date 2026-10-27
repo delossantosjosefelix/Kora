@@ -46,11 +46,12 @@ export async function obtenerCategoria(req, res, next) {
 
 export async function crearCategoria(req, res, next) {
   try {
-    const { nombre, descripcion } = req.body ?? {};
+    const { nombre, descripcion, icono } = req.body ?? {};
 
     const categoria = await crearCategoriaService({
       nombre,
       descripcion,
+      icono,
       usuarioId: req.usuario.id,
       ip: req.ip,
     });
@@ -67,11 +68,11 @@ export async function crearCategoria(req, res, next) {
 
 export async function actualizarCategoria(req, res, next) {
   try {
-    const { nombre, descripcion, activo } = req.body ?? {};
+    const { nombre, descripcion, icono, activo } = req.body ?? {};
 
     const categoria = await actualizarCategoriaService(
       req.params.id,
-      { nombre, descripcion, activo },
+      { nombre, descripcion, icono, activo },
       req.usuario.id,
       req.ip,
     );

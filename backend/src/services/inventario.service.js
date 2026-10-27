@@ -339,9 +339,11 @@ export async function listarExistencias({
       p.activo,
       c.id AS categoria_id,
       c.nombre AS categoria_nombre,
+      c.icono AS categoria_icono,
       u.id AS unidad_id,
       u.nombre AS unidad_nombre,
       u.abreviatura AS unidad_abreviatura,
+      u.icono AS unidad_icono,
       COALESCE(i.cantidad_actual, 0) AS stock_actual,
       i.updated_at AS inventario_actualizado_at,
       CASE

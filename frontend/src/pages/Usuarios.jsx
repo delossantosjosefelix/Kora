@@ -349,7 +349,7 @@ export default function Usuarios() {
           disabled={cargando || roles.length === 0}
         >
           <Plus size={18} />
-          Nuevo usuario
+          Nuevo Usuario
         </button>
       </div>
 
@@ -409,7 +409,7 @@ export default function Usuarios() {
             <input
               type="search"
               className="search-box-input"
-              placeholder="Buscar..."
+              placeholder="Buscar Usuario..."
               value={busqueda}
               onChange={(evento) => {
                 setBusqueda(evento.target.value);
@@ -426,9 +426,9 @@ export default function Usuarios() {
                 setFiltroRol(nuevo);
                 setPagina(1);
               }}
-              placeholder="Todos los roles"
+              placeholder="Todos Los Roles"
               opciones={[
-                { valor: '', etiqueta: 'Todos los roles' },
+                { valor: '', etiqueta: 'Todos Los Roles' },
                 ...roles.map((r) => ({
                   valor: String(r.id),
                   etiqueta: r.nombre,
@@ -442,7 +442,7 @@ export default function Usuarios() {
 
       <div className="users-card">
         <div className="users-table-wrap">
-          <table className="users-table">
+          <table className="users-table users-table--compact">
             <thead>
               <tr>
                 <th>Nombre / Usuario</th>
@@ -720,9 +720,9 @@ export default function Usuarios() {
                   Guardando...
                 </>
               ) : editando ? (
-                'Guardar cambios'
+                'Guardar Cambios'
               ) : (
-                'Crear usuario'
+                'Crear Usuario'
               )}
             </button>
           </>

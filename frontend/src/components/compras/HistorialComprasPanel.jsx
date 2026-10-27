@@ -1,17 +1,15 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
   AlertCircle,
-  Building,
-  Calendar,
   Eye,
-  FileText,
-  Loader,
-  Plus,
+  Filter,
   Search,
   ShoppingCart,
-  X,
 } from 'reicon-react';
 import CustomSelect from '../ui/CustomSelect.jsx';
+import CustomDateRangePicker from '../ui/CustomDateRangePicker.jsx';
+import FilterDrawer from '../ui/FilterDrawer.jsx';
+import InfoTooltip from '../ui/InfoTooltip.jsx';
 import Paginacion from '../catalogo/Paginacion.jsx';
 import DetalleCompraModal from './DetalleCompraModal.jsx';
 import { api } from '../../services/api.js';
@@ -29,6 +27,7 @@ export default function HistorialComprasPanel({ refrescarKey, onTotalChange }) {
   const [fechaDesde, setFechaDesde] = useState('');
   const [fechaHasta, setFechaHasta] = useState('');
   const [pagina, setPagina] = useState(1);
+  const [filtrosAbierto, setFiltrosAbierto] = useState(false);
 
   const [suplidores, setSuplidores] = useState([]);
   const [compraModalId, setCompraModalId] = useState(null);
@@ -55,7 +54,7 @@ export default function HistorialComprasPanel({ refrescarKey, onTotalChange }) {
     try {
       const params = new URLSearchParams({
         pagina: String(pagina),
-        limite: '12',
+        limite: '7',
       });
 
       if (busqueda.trim()) params.append('busqueda', busqueda.trim());
@@ -88,7 +87,7 @@ export default function HistorialComprasPanel({ refrescarKey, onTotalChange }) {
   }, [cargarCompras, refrescarKey]);
 
   const opcionesSuplidores = [
-    { valor: '', etiqueta: 'Todos los suplidores' },
+    { valor: '', etiqueta: 'Todos Los Suplidores' },
     ...suplidores.map((s) => ({ valor: s.id, etiqueta: s.nombre })),
   ];
 
@@ -110,92 +109,97 @@ export default function HistorialComprasPanel({ refrescarKey, onTotalChange }) {
       {/* Tarjetas resumen */}
       <div className="inventory-kpi-grid">
         <div className="inventory-kpi-card inventory-kpi-card--primary">
-          <span className="inventory-kpi-label">Facturas registradas</span>
+          <span className="inventory-kpi-label">Facturas Registradas</span>
           <span className="inventory-kpi-value">{paginacion.total}</span>
-          <span className="inventory-kpi-hint">Total acumulado en el sistema</span>
         </div>
 
         <div className="inventory-kpi-card">
-          <span className="inventory-kpi-label">Total en esta página</span>
+          <span className="inventory-kpi-label">Total En Esta Página</span>
           <span className="inventory-kpi-value">{formatearMoneda(totalMontoPagina)}</span>
-          <span className="inventory-kpi-hint">Suma de las {compras.length} compras visibles</span>
         </div>
 
         <div className="inventory-kpi-card">
-          <span className="inventory-kpi-label">Suplidores en catálogo</span>
+          <span className="inventory-kpi-label">Suplidores En Catálogo</span>
           <span className="inventory-kpi-value">{suplidores.length}</span>
-          <span className="inventory-kpi-hint">Proveedores activos registrados</span>
         </div>
       </div>
 
-      {/* Barra de filtros */}
+      {/* Barra de filtros con buscador y botón de Filtrar */}
       <div className="users-bar">
-        <div className="users-controls" style={{ flexWrap: 'wrap', gap: '10px' }}>
-          <div className="search-box">
-            <Search size={16} className="search-box-icon" />
-            <input
-              type="text"
-              className="search-box-input"
-              placeholder="Buscar por factura o suplidor..."
-              value={busqueda}
-              onChange={(e) => {
-                setBusqueda(e.target.value);
-                setPagina(1);
-              }}
-            />
-          </div>
+        <div className="search-box" style={{ flex: 1, minWidth: '220px' }}>
+          <Search size={16} className="search-box-icon" />
+          <input
+            type="text"
+            className="search-box-input"
+            placeholder="Buscar Compra..."
+            value={busqueda}
+            onChange={(e) => {
+              setBusqueda(e.target.value);
+              setPagina(1);
+            }}
+          />
+        </div>
 
+        <div className="users-controls">
+          <button
+            type="button"
+            className={`button button--secondary filter-trigger-btn${(suplidorId ? 1 : 0) + (fechaDesde || fechaHasta ? 1 : 0) > 0 ? ' filter-trigger-btn--active' : ''}`}
+            onClick={() => setFiltrosAbierto(true)}
+            aria-label="Abrir panel de filtros"
+          >
+            <Filter size={16} />
+            <span>Filtrar</span>
+            {(suplidorId ? 1 : 0) + (fechaDesde || fechaHasta ? 1 : 0) > 0 ? (
+              <span className="filter-badge">
+                {(suplidorId ? 1 : 0) + (fechaDesde || fechaHasta ? 1 : 0)}
+              </span>
+            ) : null}
+          </button>
+        </div>
+      </div>
+
+      {/* Drawer lateral derecho para filtros */}
+      <FilterDrawer
+        abierto={filtrosAbierto}
+        onCerrar={() => setFiltrosAbierto(false)}
+        titulo="Filtros De Compras"
+        totalFiltrosActivos={(suplidorId ? 1 : 0) + (fechaDesde || fechaHasta ? 1 : 0)}
+        onLimpiar={limpiarFiltros}
+        onAplicar={() => setPagina(1)}
+      >
+        <div className="filter-drawer-group">
+          <label className="filter-drawer-group-label" htmlFor="filtro-suplidor-compras">
+            Suplidor
+          </label>
           <CustomSelect
+            id="filtro-suplidor-compras"
+            className="custom-select-wrap--form"
             opciones={opcionesSuplidores}
             valor={suplidorId}
             onChange={(val) => {
               setSuplidorId(val);
               setPagina(1);
             }}
-            ancho="230px"
+            placeholder="Todos Los Suplidores"
           />
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>Desde:</span>
-            <input
-              type="date"
-              className="input input--sm"
-              style={{ width: '135px' }}
-              value={fechaDesde}
-              onChange={(e) => {
-                setFechaDesde(e.target.value);
-                setPagina(1);
-              }}
-            />
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>Hasta:</span>
-            <input
-              type="date"
-              className="input input--sm"
-              style={{ width: '135px' }}
-              value={fechaHasta}
-              onChange={(e) => {
-                setFechaHasta(e.target.value);
-                setPagina(1);
-              }}
-            />
-          </div>
-
-          {hayFiltros ? (
-            <button
-              type="button"
-              className="button button--ghost button--sm"
-              onClick={limpiarFiltros}
-              title="Limpiar filtros"
-            >
-              <X size={14} />
-              Limpiar
-            </button>
-          ) : null}
         </div>
-      </div>
+
+        <div className="filter-drawer-group">
+          <span className="filter-drawer-group-label">
+            Rango De Fechas
+          </span>
+          <CustomDateRangePicker
+            desglosado
+            fechaDesde={fechaDesde}
+            fechaHasta={fechaHasta}
+            onChange={({ fechaDesde: fD, fechaHasta: fH }) => {
+              setFechaDesde(fD);
+              setFechaHasta(fH);
+              setPagina(1);
+            }}
+          />
+        </div>
+      </FilterDrawer>
 
       {/* Mensaje de error de carga */}
       {errorCarga ? (
@@ -208,100 +212,119 @@ export default function HistorialComprasPanel({ refrescarKey, onTotalChange }) {
       ) : null}
 
       {/* Tabla de compras */}
-      <div className="table-wrapper">
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Fecha</th>
-              <th>No. Factura</th>
-              <th>Suplidor</th>
-              <th style={{ textAlign: 'right' }}>Total (RD$)</th>
-              <th>Estado</th>
-              <th style={{ textAlign: 'center', width: '90px' }}>Acción</th>
-            </tr>
-          </thead>
-          <tbody>
-            {cargando ? (
-              Array.from({ length: 5 }).map((_, i) => (
-                <tr key={`skel-${i}`}>
-                  <td><div className="skeleton skeleton--text" style={{ width: '90px' }} /></td>
-                  <td><div className="skeleton skeleton--text" style={{ width: '110px' }} /></td>
-                  <td><div className="skeleton skeleton--text" style={{ width: '160px' }} /></td>
-                  <td><div className="skeleton skeleton--text" style={{ width: '90px', marginLeft: 'auto' }} /></td>
-                  <td><div className="skeleton skeleton--badge" /></td>
-                  <td><div className="skeleton skeleton--btn" style={{ margin: '0 auto' }} /></td>
-                </tr>
-              ))
-            ) : compras.length === 0 ? (
+      <div className="users-card">
+        <div className="users-table-wrap">
+          <table className="users-table users-table--compact">
+            <thead>
               <tr>
-                <td colSpan={6} style={{ textAlign: 'center', padding: '48px 16px' }}>
-                  <div className="empty-state">
-                    <ShoppingCart size={36} />
-                    <p className="empty-state__title">
-                      {hayFiltros
-                        ? 'No se encontraron compras con los filtros aplicados'
-                        : 'Aún no hay compras registradas'}
-                    </p>
-                    <p className="empty-state__description">
-                      {hayFiltros
-                        ? 'Prueba modificando el rango de fechas, suplidor o término de búsqueda.'
-                        : 'Utiliza la pestaña "Registrar nueva compra" para ingresar la mercancía recibida.'}
-                    </p>
-                  </div>
-                </td>
+                <th style={{ width: '130px' }}>Fecha</th>
+                <th style={{ width: '150px' }}>No. Factura</th>
+                <th>Suplidor</th>
+                <th style={{ width: '140px', textAlign: 'right' }}>Total (RD$)</th>
+                <th style={{ width: '110px' }}>Estado</th>
+                <th style={{ textAlign: 'center', width: '70px' }}>Acciones</th>
               </tr>
-            ) : (
-              compras.map((compra) => (
-                <tr key={compra.id}>
-                  <td style={{ fontWeight: 600 }}>{formatearFecha(compra.fecha)}</td>
-                  <td>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 650 }}>
-                      {compra.numero_factura_suplidor || 'Sin número'}
-                    </span>
-                  </td>
-                  <td>
-                    <div style={{ fontWeight: 600, color: 'var(--color-ink)' }}>
-                      {compra.suplidor_nombre || 'Desconocido'}
+            </thead>
+            <tbody>
+              {cargando ? (
+                Array.from({ length: 7 }).map((_, i) => (
+                  <tr key={`skel-${i}`}>
+                    <td><div className="skeleton skeleton--text" style={{ width: '90px' }} /></td>
+                    <td><div className="skeleton skeleton--text" style={{ width: '110px' }} /></td>
+                    <td><div className="skeleton skeleton--text" style={{ width: '160px' }} /></td>
+                    <td><div className="skeleton skeleton--text" style={{ width: '90px', marginLeft: 'auto' }} /></td>
+                    <td><div className="skeleton skeleton--text" style={{ width: '70px' }} /></td>
+                    <td><div className="skeleton skeleton--btn" style={{ margin: '0 auto' }} /></td>
+                  </tr>
+                ))
+              ) : compras.length === 0 ? (
+                <tr>
+                  <td colSpan={6} style={{ textAlign: 'center', padding: '48px 16px' }}>
+                    <div className="empty-state">
+                      <ShoppingCart size={36} />
+                      <p
+                        className="empty-state__title"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          justifyContent: 'center',
+                          margin: 0,
+                        }}
+                      >
+                        <span>
+                          {hayFiltros
+                            ? 'No Se Encontraron Compras'
+                            : 'Sin Compras Registradas'}
+                        </span>
+                        <InfoTooltip
+                          tipo="help"
+                          texto={
+                            hayFiltros
+                              ? 'Prueba modificando el rango de fechas, suplidor o término de búsqueda.'
+                              : 'Utiliza la pestaña Nueva Compra para ingresar la mercancía recibida.'
+                          }
+                        />
+                      </p>
                     </div>
-                    {compra.observacion ? (
-                      <div style={{ fontSize: '0.76rem', color: 'var(--color-text-muted)' }}>
-                        {compra.observacion}
-                      </div>
-                    ) : null}
-                  </td>
-                  <td style={{ textAlign: 'right', fontWeight: 750, color: 'var(--color-ink)' }}>
-                    {formatearMoneda(compra.total)}
-                  </td>
-                  <td>
-                    <span
-                      className={`compra-status-badge compra-status-badge--${
-                        compra.estado === 'COMPLETADA' ? 'completada' : 'anulada'
-                      }`}
-                    >
-                      {compra.estado}
-                    </span>
-                  </td>
-                  <td style={{ textAlign: 'center' }}>
-                    <button
-                      type="button"
-                      className="button button--ghost button--sm"
-                      onClick={() => setCompraModalId(compra.id)}
-                      title="Ver detalle de la compra"
-                      aria-label="Ver detalle"
-                    >
-                      <Eye size={15} />
-                      Detalle
-                    </button>
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                compras.map((compra) => (
+                  <tr key={compra.id}>
+                    <td style={{ fontWeight: 600 }}>{formatearFecha(compra.fecha)}</td>
+                    <td>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600 }}>
+                        {compra.numero_factura_suplidor || 'Sin número'}
+                      </span>
+                    </td>
+                    <td>
+                      <div style={{ fontWeight: 600, color: 'var(--color-ink)' }}>
+                        {compra.suplidor_nombre || 'Desconocido'}
+                      </div>
+                      {compra.observacion ? (
+                        <div style={{ fontSize: '0.76rem', color: 'var(--color-text-muted)' }}>
+                          {compra.observacion}
+                        </div>
+                      ) : null}
+                    </td>
+                    <td style={{ textAlign: 'right', fontWeight: 600, color: 'var(--color-ink)' }}>
+                      {formatearMoneda(compra.total)}
+                    </td>
+                    <td>
+                      <span
+                        className={`user-status-text ${
+                          compra.estado === 'COMPLETADA'
+                            ? 'user-status-text--active'
+                            : 'user-status-text--inactive'
+                        }`}
+                      >
+                        {compra.estado === 'COMPLETADA' ? 'Completada' : 'Anulada'}
+                      </span>
+                    </td>
+                    <td style={{ textAlign: 'center' }}>
+                      <div className="table-actions" style={{ justifyContent: 'center' }}>
+                        <button
+                          type="button"
+                          className="icon-button"
+                          onClick={() => setCompraModalId(compra.id)}
+                          title="Ver detalle de la compra"
+                          aria-label="Ver detalle"
+                        >
+                          <Eye size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Paginación */}
-      {paginacion.total_paginas > 1 ? (
+      {compras.length > 0 ? (
         <Paginacion
           pagina={paginacion.pagina}
           totalPaginas={paginacion.total_paginas}

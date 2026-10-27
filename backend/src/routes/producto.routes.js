@@ -5,6 +5,7 @@ import {
   eliminarProducto,
   listarProductos,
   obtenerProducto,
+  obtenerSiguienteCodigo,
 } from '../controllers/producto.controller.js';
 import {
   autorizarRoles,
@@ -20,6 +21,11 @@ const rolesGestionCatalogo = autorizarRoles('Administrador', 'Gerente');
 productoRouter.use(verificarAutenticacion, exigirPasswordActualizada);
 
 productoRouter.get('/', listarProductos);
+productoRouter.get(
+  '/siguiente-codigo',
+  rolesGestionCatalogo,
+  obtenerSiguienteCodigo,
+);
 productoRouter.get('/:id', obtenerProducto);
 
 productoRouter.post(

@@ -2,6 +2,10 @@ import { pool, query } from '../config/db.js';
 import { eliminarArchivoUpload } from '../middleware/upload.middleware.js';
 import { ErrorHttp } from '../utils/ErrorHttp.js';
 import { registrarAuditoria } from './auditoria.service.js';
+import {
+  generarSiguienteCodigo,
+  previsualizarSiguienteCodigo,
+} from './secuencia.service.js';
 
 const TASAS_ITBIS_PERMITIDAS = new Set([0, 16, 18]);
 
@@ -288,9 +292,11 @@ export function mapearProducto(fila, rolSolicitante) {
     descripcion: fila.descripcion,
     categoria_id: fila.categoria_id,
     categoria_nombre: fila.categoria_nombre,
+    categoria_icono: fila.categoria_icono || 'Tag',
     unidad_id: fila.unidad_id,
     unidad_nombre: fila.unidad_nombre,
     unidad_abreviatura: fila.unidad_abreviatura,
+    unidad_icono: fila.unidad_icono || 'Package',
     precio_final: precioFinal,
     tasa_itbis: tasaItbis,
     precio_base: precioBase,
@@ -316,9 +322,11 @@ const SELECT_PRODUCTO = `
     p.descripcion,
     p.categoria_id,
     c.nombre AS categoria_nombre,
+    c.icono AS categoria_icono,
     p.unidad_id,
     u.nombre AS unidad_nombre,
     u.abreviatura AS unidad_abreviatura,
+    u.icono AS unidad_icono,
     p.costo,
     p.precio_final,
     p.tasa_itbis,
@@ -452,7 +460,6 @@ export async function crearProducto({
   let imagenGuardada = imagenUrl;
 
   try {
-    const codigoValido = validarCodigo(codigo);
     const codigoBarrasValido = validarCodigoBarras(codigoBarras);
     const nombreValido = validarNombre(nombre);
     const descripcionValida = validarDescripcion(descripcion);
@@ -462,13 +469,6 @@ export async function crearProducto({
     const precioFinalValido = validarPrecioFinal(precioFinal);
     const tasaItbisValida = validarTasaItbis(tasaItbis);
     const stockMinimoValido = validarStockMinimo(stockMinimo);
-
-    if (await codigoExiste(codigoValido, null, client)) {
-      throw new ErrorHttp(
-        400,
-        `Ya existe un producto con el código "${codigoValido}".`,
-      );
-    }
 
     if (
       codigoBarrasValido &&
@@ -481,6 +481,24 @@ export async function crearProducto({
     }
 
     await client.query('BEGIN');
+
+    let codigoValido;
+    if (codigo && typeof codigo === 'string' && codigo.trim()) {
+      codigoValido = validarCodigo(codigo);
+      if (await codigoExiste(codigoValido, null, client)) {
+        throw new ErrorHttp(
+          400,
+          `Ya existe un producto con el código "${codigoValido}".`,
+        );
+      }
+    } else {
+      codigoValido = await generarSiguienteCodigo(client, {
+        tabla: 'productos',
+        columna: 'codigo',
+        prefijo: 'PROD-',
+        longitud: 4,
+      });
+    }
 
     const { rows: productoRows } = await client.query(
       `
@@ -852,4 +870,13 @@ export async function eliminarProducto(id, usuarioId, ip) {
   } finally {
     client.release();
   }
+}
+
+export async function obtenerSiguienteCodigoProducto() {
+  return await previsualizarSiguienteCodigo({
+    tabla: 'productos',
+    columna: 'codigo',
+    prefijo: 'PROD-',
+    longitud: 4,
+  });
 }

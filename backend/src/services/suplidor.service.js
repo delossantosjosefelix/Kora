@@ -1,4 +1,4 @@
-import { pool, query } from '../config/db.js';
+import { query } from '../config/db.js';
 import { ErrorHttp } from '../utils/ErrorHttp.js';
 import { registrarAuditoria } from './auditoria.service.js';
 

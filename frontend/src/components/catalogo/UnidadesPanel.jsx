@@ -18,23 +18,28 @@ import {
   XCircle,
 } from 'reicon-react';
 import Modal from '../ui/Modal.jsx';
+import CustomSelect from '../ui/CustomSelect.jsx';
+import IconPicker from '../ui/IconPicker.jsx';
 import CatalogoBar from './CatalogoBar.jsx';
 import Paginacion from './Paginacion.jsx';
 import { api } from '../../services/api.js';
 import { useAuth } from '../../hooks/useAuth.js';
 import notify from '../../utils/notify.js';
 import { mensajeError } from '../../utils/apiError.js';
+import { renderIcono } from '../../utils/iconosCatalogo.jsx';
+import { Package } from 'reicon-react';
 
 const FORMULARIO_VACIO = {
   nombre: '',
   abreviatura: '',
+  icono: 'Package',
   activo: true,
 };
 
-const POR_PAGINA = 8;
+const POR_PAGINA = 7;
 
 const UnidadesPanel = forwardRef(function UnidadesPanel(
-  { tab, onCambiarTab, totales, onTotalChange },
+  { onTotalChange },
   ref,
 ) {
   const { esAdministrador, esGerente } = useAuth();
@@ -112,6 +117,7 @@ const UnidadesPanel = forwardRef(function UnidadesPanel(
     setForm({
       nombre: unidad.nombre ?? '',
       abreviatura: unidad.abreviatura ?? '',
+      icono: unidad.icono ?? 'Package',
       activo: Boolean(unidad.activo),
     });
     setErrores({});
@@ -167,7 +173,11 @@ const UnidadesPanel = forwardRef(function UnidadesPanel(
     setErrorForm('');
 
     try {
-      const cuerpo = { nombre, abreviatura };
+      const cuerpo = {
+        nombre,
+        abreviatura,
+        icono: form.icono || 'Package',
+      };
 
       if (editando) {
         cuerpo.activo = form.activo;
@@ -316,27 +326,36 @@ const UnidadesPanel = forwardRef(function UnidadesPanel(
       ) : null}
 
       <CatalogoBar
-        tab={tab}
-        onCambiarTab={onCambiarTab}
-        totales={totales}
         busqueda={busqueda}
         onBuscar={(valor) => {
           setBusqueda(valor);
           setPagina(1);
         }}
-        filtroEstado={filtroEstado}
-        onCambiarFiltro={(valor) => {
-          setFiltroEstado(valor);
-          setPagina(1);
-        }}
-        mostrarFiltro={puedeGestionar}
-        placeholderBusqueda="Buscar unidades..."
+        placeholderBusqueda="Buscar Unidad..."
         ariaLabelBusqueda="Buscar unidades"
+        controlExtra={
+          puedeGestionar ? (
+            <CustomSelect
+              valor={filtroEstado}
+              onChange={(nuevo) => {
+                setFiltroEstado(nuevo);
+                setPagina(1);
+              }}
+              placeholder="Todos Los Estados"
+              opciones={[
+                { valor: 'todos', etiqueta: 'Todos Los Estados' },
+                { valor: 'activos', etiqueta: 'Activas' },
+                { valor: 'inactivos', etiqueta: 'Inactivas' },
+              ]}
+              aria-label="Filtrar por estado"
+            />
+          ) : null
+        }
       />
 
       <div className="users-card">
         <div className="users-table-wrap">
-          <table className="users-table">
+          <table className="users-table users-table--compact">
             <thead>
               <tr>
                 <th>Nombre / Abreviatura</th>
@@ -382,9 +401,18 @@ const UnidadesPanel = forwardRef(function UnidadesPanel(
                 unidadesPaginadas.map((unidad) => (
                   <tr key={unidad.id}>
                     <td>
-                      <div className="user-cell">
+                      <div
+                        className="user-cell user-cell--interactive"
+                        onClick={() => setUnidadDetalle(unidad)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') setUnidadDetalle(unidad);
+                        }}
+                        title="Ver detalles de la unidad"
+                      >
                         <span className="user-avatar" aria-hidden="true">
-                          <Ruler size={18} />
+                          {renderIcono(unidad.icono, { size: 18 }, Package)}
                         </span>
                         <div className="user-cell-info">
                           <div className="user-name">{unidad.nombre}</div>
@@ -484,12 +512,8 @@ const UnidadesPanel = forwardRef(function UnidadesPanel(
       <Modal
         abierto={modalAbierto}
         onCerrar={cerrarModal}
-        titulo={editando ? 'Editar unidad' : 'Nueva unidad'}
-        descripcion={
-          editando
-            ? 'Actualiza el nombre, la abreviatura o el estado.'
-            : 'Crea una unidad de medida para el catálogo.'
-        }
+        titulo={editando ? 'Editar Unidad' : 'Nueva Unidad'}
+        tamano="md"
         footer={
           <>
             <button
@@ -512,9 +536,9 @@ const UnidadesPanel = forwardRef(function UnidadesPanel(
                   Guardando...
                 </>
               ) : editando ? (
-                'Guardar cambios'
+                'Guardar Cambios'
               ) : (
-                'Crear unidad'
+                'Crear Unidad'
               )}
             </button>
           </>
@@ -522,7 +546,7 @@ const UnidadesPanel = forwardRef(function UnidadesPanel(
       >
         <form
           id="form-unidad"
-          className="form-stack"
+          className="form-stack form-stack--compact"
           onSubmit={manejarGuardar}
           noValidate
         >
@@ -534,6 +558,18 @@ const UnidadesPanel = forwardRef(function UnidadesPanel(
           ) : null}
 
           <div className="field-grid">
+            <div className="field field--full">
+              <IconPicker
+                label="Icono Representativo"
+                valor={form.icono || 'Package'}
+                onChange={(nuevoIcono) =>
+                  setForm((f) => ({ ...f, icono: nuevoIcono }))
+                }
+                fallbackIcon="Package"
+                disabled={guardando}
+              />
+            </div>
+
             <div className="field">
               <label htmlFor="unidad-nombre">Nombre</label>
               <input
@@ -595,24 +631,51 @@ const UnidadesPanel = forwardRef(function UnidadesPanel(
       <Modal
         abierto={Boolean(unidadDetalle)}
         onCerrar={() => setUnidadDetalle(null)}
-        titulo="Detalles de la unidad"
-        descripcion="Ficha informativa de la unidad de medida seleccionada."
+        titulo="Detalle De La Unidad"
+        tamano="md"
         footer={
-          <button
-            type="button"
-            className="button button--secondary"
-            onClick={() => setUnidadDetalle(null)}
-          >
-            Cerrar
-          </button>
+          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', width: '100%' }}>
+            <button
+              type="button"
+              className="button button--secondary"
+              onClick={() => setUnidadDetalle(null)}
+            >
+              Cerrar
+            </button>
+            {puedeGestionar && unidadDetalle ? (
+              <button
+                type="button"
+                className="button button--primary"
+                onClick={() => {
+                  const uni = unidadDetalle;
+                  setUnidadDetalle(null);
+                  abrirEditar(uni);
+                }}
+              >
+                <Edit size={16} />
+                Editar Unidad
+              </button>
+            ) : null}
+          </div>
         }
       >
         {unidadDetalle ? (
-          <div className="detail-grid">
-            <div className="detail-item">
-              <span className="detail-label">Nombre</span>
-              <span className="detail-value">{unidadDetalle.nombre}</span>
+          <div>
+            <div className="detail-user-header">
+              <span className="detail-user-avatar" aria-hidden="true">
+                {renderIcono(unidadDetalle.icono, { size: 22 }, Package)}
+              </span>
+              <div>
+                <div className="detail-user-name">{unidadDetalle.nombre}</div>
+                <div className="detail-user-handle">Unidad de medida ({unidadDetalle.abreviatura})</div>
+              </div>
             </div>
+
+            <div className="detail-grid">
+              <div className="detail-item">
+                <span className="detail-label">Nombre</span>
+                <span className="detail-value">{unidadDetalle.nombre}</span>
+              </div>
 
             <div className="detail-item">
               <span className="detail-label">Abreviatura</span>
@@ -628,6 +691,7 @@ const UnidadesPanel = forwardRef(function UnidadesPanel(
               </span>
             </div>
           </div>
+        </div>
         ) : null}
       </Modal>
     </div>

@@ -2,7 +2,7 @@ import { query } from '../config/db.js';
 import { ErrorHttp } from '../utils/ErrorHttp.js';
 import { registrarAuditoria } from './auditoria.service.js';
 
-const CAMPOS = 'id, nombre, abreviatura, activo';
+const CAMPOS = 'id, nombre, abreviatura, icono, activo';
 
 function validarId(id) {
   const numero = Number(id);
@@ -46,6 +46,23 @@ function validarAbreviatura(abreviatura) {
   }
 
   return abreviaturaLimpia;
+}
+
+function validarIcono(icono) {
+  if (icono === undefined || icono === null || icono === '') {
+    return 'Package';
+  }
+
+  if (typeof icono !== 'string') {
+    return 'Package';
+  }
+
+  const iconoLimpio = icono.trim();
+  if (iconoLimpio.length > 40) {
+    return 'Package';
+  }
+
+  return iconoLimpio || 'Package';
 }
 
 async function nombreExiste(nombre, excluirId = null) {
@@ -118,11 +135,13 @@ export async function obtenerUnidadPorId(id) {
 export async function crearUnidad({
   nombre,
   abreviatura,
+  icono,
   usuarioId,
   ip,
 }) {
   const nombreLimpio = validarNombre(nombre);
   const abreviaturaLimpia = validarAbreviatura(abreviatura);
+  const iconoLimpio = validarIcono(icono);
 
   if (await nombreExiste(nombreLimpio)) {
     throw new ErrorHttp(400, 'Ya existe una unidad con ese nombre.');
@@ -137,11 +156,11 @@ export async function crearUnidad({
   try {
     const { rows } = await query(
       `
-        INSERT INTO unidades_medida (nombre, abreviatura)
-        VALUES ($1, $2)
+        INSERT INTO unidades_medida (nombre, abreviatura, icono)
+        VALUES ($1, $2, $3)
         RETURNING ${CAMPOS}
       `,
-      [nombreLimpio, abreviaturaLimpia],
+      [nombreLimpio, abreviaturaLimpia, iconoLimpio],
     );
 
     unidad = rows[0];
@@ -164,6 +183,7 @@ export async function crearUnidad({
     datosNuevos: {
       nombre: unidad.nombre,
       abreviatura: unidad.abreviatura,
+      icono: unidad.icono,
     },
     ip,
   });
@@ -173,7 +193,7 @@ export async function crearUnidad({
 
 export async function actualizarUnidad(
   id,
-  { nombre, abreviatura, activo },
+  { nombre, abreviatura, icono, activo },
   usuarioId,
   ip,
 ) {
@@ -208,6 +228,11 @@ export async function actualizarUnidad(
 
     sets.push(`abreviatura = $${posicion++}`);
     valores.push(abreviaturaLimpia);
+  }
+
+  if (icono !== undefined) {
+    sets.push(`icono = $${posicion++}`);
+    valores.push(validarIcono(icono));
   }
 
   if (activo !== undefined) {

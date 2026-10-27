@@ -4,6 +4,7 @@ import {
   eliminarProducto as eliminarProductoService,
   listarProductos as listarProductosService,
   obtenerProductoPorId,
+  obtenerSiguienteCodigoProducto,
 } from '../services/producto.service.js';
 import { ErrorHttp } from '../utils/ErrorHttp.js';
 
@@ -36,6 +37,15 @@ export async function obtenerProducto(req, res, next) {
     }
 
     return res.status(200).json({ ok: true, producto });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+export async function obtenerSiguienteCodigo(req, res, next) {
+  try {
+    const siguienteCodigo = await obtenerSiguienteCodigoProducto();
+    return res.status(200).json({ ok: true, siguienteCodigo });
   } catch (error) {
     return next(error);
   }

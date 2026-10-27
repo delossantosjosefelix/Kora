@@ -78,7 +78,10 @@ export default function CustomSelect({
         aria-expanded={abierto}
         aria-label={ariaLabel}
       >
-        <span className="custom-select-label">{etiquetaMostrar}</span>
+        <span className="custom-select-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+          {opcionSeleccionada?.icono ? opcionSeleccionada.icono : null}
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{etiquetaMostrar}</span>
+        </span>
         <AngleDown
           size={16}
           className={`custom-select-arrow${abierto ? ' custom-select-arrow--open' : ''}`}
@@ -98,8 +101,9 @@ export default function CustomSelect({
                 className={`custom-select-option${esActivo ? ' custom-select-option--active' : ''}`}
                 onClick={() => seleccionar(op.valor)}
               >
-                <span className="custom-select-option-text">
-                  {op.etiqueta}
+                <span className="custom-select-option-text" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {op.icono ? op.icono : null}
+                  <span>{op.etiqueta}</span>
                 </span>
                 {esActivo ? (
                   <Check size={14} className="custom-select-option-check" />

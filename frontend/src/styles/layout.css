@@ -200,13 +200,6 @@
   font-weight: 750;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .sidebar-submenu,
-  .sidebar-chevron {
-    transition: none;
-  }
-}
-
 /* Sidebar contraido (solo escritorio) */
 @media (min-width: 821px) {
   .sidebar--colapsado {
@@ -389,9 +382,9 @@
 .app-content {
   flex: 1;
   width: 100%;
-  max-width: 1160px;
+  max-width: 1440px;
   margin: 0 auto;
-  padding: 24px;
+  padding: 20px 28px;
 }
 
 /* Páginas */
@@ -712,3 +705,7 @@
     align-items: flex-start;
   }
 }
+
+
+
+

@@ -2,7 +2,7 @@ import { query } from '../config/db.js';
 import { ErrorHttp } from '../utils/ErrorHttp.js';
 import { registrarAuditoria } from './auditoria.service.js';
 
-const CAMPOS = 'id, nombre, descripcion, activo';
+const CAMPOS = 'id, nombre, descripcion, icono, activo';
 
 function validarId(id) {
   const numero = Number(id);
@@ -50,6 +50,23 @@ function validarDescripcion(descripcion) {
   }
 
   return descripcionLimpia || null;
+}
+
+function validarIcono(icono) {
+  if (icono === undefined || icono === null || icono === '') {
+    return 'Tag';
+  }
+
+  if (typeof icono !== 'string') {
+    return 'Tag';
+  }
+
+  const iconoLimpio = icono.trim();
+  if (iconoLimpio.length > 40) {
+    return 'Tag';
+  }
+
+  return iconoLimpio || 'Tag';
 }
 
 async function nombreExiste(nombre, excluirId = null) {
@@ -104,9 +121,10 @@ export async function obtenerCategoriaPorId(id) {
   return rows[0] ?? null;
 }
 
-export async function crearCategoria({ nombre, descripcion, usuarioId, ip }) {
+export async function crearCategoria({ nombre, descripcion, icono, usuarioId, ip }) {
   const nombreLimpio = validarNombre(nombre);
   const descripcionLimpia = validarDescripcion(descripcion);
+  const iconoLimpio = validarIcono(icono);
 
   if (await nombreExiste(nombreLimpio)) {
     throw new ErrorHttp(400, 'Ya existe una categoría con ese nombre.');
@@ -117,11 +135,11 @@ export async function crearCategoria({ nombre, descripcion, usuarioId, ip }) {
   try {
     const { rows } = await query(
       `
-        INSERT INTO categorias (nombre, descripcion)
-        VALUES ($1, $2)
+        INSERT INTO categorias (nombre, descripcion, icono)
+        VALUES ($1, $2, $3)
         RETURNING ${CAMPOS}
       `,
-      [nombreLimpio, descripcionLimpia],
+      [nombreLimpio, descripcionLimpia, iconoLimpio],
     );
 
     categoria = rows[0];
@@ -141,6 +159,7 @@ export async function crearCategoria({ nombre, descripcion, usuarioId, ip }) {
     datosNuevos: {
       nombre: categoria.nombre,
       descripcion: categoria.descripcion,
+      icono: categoria.icono,
     },
     ip,
   });
@@ -150,7 +169,7 @@ export async function crearCategoria({ nombre, descripcion, usuarioId, ip }) {
 
 export async function actualizarCategoria(
   id,
-  { nombre, descripcion, activo },
+  { nombre, descripcion, icono, activo },
   usuarioId,
   ip,
 ) {
@@ -179,6 +198,11 @@ export async function actualizarCategoria(
   if (descripcion !== undefined) {
     sets.push(`descripcion = $${posicion++}`);
     valores.push(validarDescripcion(descripcion));
+  }
+
+  if (icono !== undefined) {
+    sets.push(`icono = $${posicion++}`);
+    valores.push(validarIcono(icono));
   }
 
   if (activo !== undefined) {

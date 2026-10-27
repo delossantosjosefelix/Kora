@@ -92,3 +92,24 @@ npm run build
 - Verifica que el build de Vite termine sin errores antes de terminar.
 - Mantiene el diseno consistente con las variables de `frontend/src/styles/variables.css`.
 - No elimines archivos o cambios existentes sin revisar primero su contenido.
+
+## 8. Sistema estetico y animaciones
+
+Consulta el documento completo en `docs/04-Decisiones/001-sistema-estetico-y-animaciones.md`.
+
+Reglas obligatorias para mantener la experiencia de usuario:
+
+- **Navegacion entre paginas (rutas)**: 100% estatica e instantanea (0ms). En `AppLayout.jsx`, `<Outlet />` se renderiza de forma directa dentro de `<main className="app-content">`. Prohibido agregar `key={location.pathname}` o envoltorios con animaciones de ruta (`pageFadeIn`, `pageSlideIn`).
+- **Navegacion entre pestanas internas**:
+  - La barra de pestanas (`.users-tabs`) debe ser un bloque fijo a nivel de pagina, fuera de los paneles que se deslizan.
+  - El estado `direccion` debe inicializarse en `null`: `const [direccion, setDireccion] = useState(null)`.
+  - La clase `.tab-panel--slide-${direccion}` solo se aplica cuando `direccion` no es nulo (`tab === '...' && direccion ? ... : ''`), asegurando que al entrar a la pagina por primera vez todo este inmovil.
+  - Al cambiar de pestana se utiliza `.tab-panel--slide-adelante` o `.tab-panel--slide-atras` de `ui.css`.
+  - No anadas animaciones verticales por defecto (`tabFadeIn`, `translateY(3px)`) en `.users-page-panel:not([hidden])`.
+  - La linea indicadora de pestana activa (`.users-tab--active::after`) es estatica sin `tabUnderlineIn`.
+- **Estructura estandar de vistas operativas**:
+  - Cabecera: `.users-header` con h1 y boton primario a la derecha.
+  - Pestanas fijas: `.users-bar` con `.users-tabs` y conteos numericos (`.users-tab-count`).
+  - Controles por panel: `.users-bar` con `.search-box` (`flex: 1`) a la izquierda y `.users-controls` a la derecha.
+- **Formas y esquinas**: Minimalistas y sobrias (`--radius-xs: 4px`, `--radius-sm: 8px`).
+

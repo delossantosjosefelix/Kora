@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   AlertCircle,
-  Building,
   Check,
   FileText,
   Loader,
@@ -13,6 +12,8 @@ import {
   X,
 } from 'reicon-react';
 import CustomSelect from '../ui/CustomSelect.jsx';
+import CustomDatePicker from '../ui/CustomDatePicker.jsx';
+import InfoTooltip from '../ui/InfoTooltip.jsx';
 import SuplidorModal from '../inventario/SuplidorModal.jsx';
 import { api } from '../../services/api.js';
 import notify from '../../utils/notify.js';
@@ -320,38 +321,41 @@ export default function NuevaCompraPanel({ onCompraRegistrada }) {
         <div className="compra-card">
           <h2 className="compra-card-title">
             <FileText size={18} />
-            Datos de la factura y suplidor
+            Datos De La Factura
           </h2>
 
           <div className="field-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
             <div className="field">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <label className="field-label" htmlFor="compra-suplidor">
-                  Suplidor *
-                </label>
+              <label className="field-label" htmlFor="compra-suplidor">
+                Suplidor <span className="field-required">*</span>
+              </label>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <CustomSelect
+                    id="compra-suplidor"
+                    opciones={opcionesSuplidores}
+                    valor={suplidorId}
+                    onChange={setSuplidorId}
+                    ancho="100%"
+                    disabled={cargandoSuplidores}
+                  />
+                </div>
                 <button
                   type="button"
-                  className="button button--ghost button--sm"
-                  style={{ padding: '2px 6px', height: 'auto', minHeight: 'unset', fontSize: '0.78rem' }}
+                  className="button button--secondary button--sm"
+                  style={{ whiteSpace: 'nowrap', height: '38px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                   onClick={() => setModalSuplidorAbierto(true)}
+                  title="Crear un nuevo suplidor"
                 >
-                  <Plus size={12} />
-                  Nuevo suplidor
+                  <Plus size={15} />
+                  <span>Nuevo Suplidor</span>
                 </button>
               </div>
-              <CustomSelect
-                id="compra-suplidor"
-                opciones={opcionesSuplidores}
-                valor={suplidorId}
-                onChange={setSuplidorId}
-                ancho="100%"
-                disabled={cargandoSuplidores}
-              />
             </div>
 
             <div className="field">
               <label className="field-label" htmlFor="compra-factura">
-                No. Factura o Comprobante
+                No. Factura O Comprobante
               </label>
               <input
                 id="compra-factura"
@@ -366,21 +370,19 @@ export default function NuevaCompraPanel({ onCompraRegistrada }) {
 
             <div className="field">
               <label className="field-label" htmlFor="compra-fecha">
-                Fecha de recepción
+                Fecha De Recepción
               </label>
-              <input
+              <CustomDatePicker
                 id="compra-fecha"
-                type="date"
-                className="input"
-                value={fecha}
-                onChange={(e) => setFecha(e.target.value)}
+                valor={fecha}
+                onChange={setFecha}
               />
             </div>
           </div>
 
           <div className="field">
             <label className="field-label" htmlFor="compra-observacion">
-              Observación / Notas de entrega
+              Observación / Notas De Entrega
             </label>
             <input
               id="compra-observacion"
@@ -393,7 +395,7 @@ export default function NuevaCompraPanel({ onCompraRegistrada }) {
             />
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
             <input
               id="compra-actualizar-costo-global"
               type="checkbox"
@@ -403,14 +405,12 @@ export default function NuevaCompraPanel({ onCompraRegistrada }) {
             />
             <label
               htmlFor="compra-actualizar-costo-global"
-              style={{ fontSize: '0.86rem', color: 'var(--color-ink)', fontWeight: 600, cursor: 'pointer' }}
+              style={{ fontSize: '0.86rem', color: 'var(--color-ink)', fontWeight: 500, cursor: 'pointer' }}
             >
-              Actualizar costo de referencia de los productos en el catálogo
+              Actualizar Costo De Referencia En Catálogo
             </label>
+            <InfoTooltip texto="Si se activa, el costo unitario de esta compra pasará a ser el costo base del producto para futuros cálculos y valorización de inventario." />
           </div>
-          <span style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', marginLeft: '24px', marginTop: '-10px' }}>
-            Si se activa, el costo unitario de esta compra pasará a ser el costo base del producto para futuros cálculos y valorización de inventario.
-          </span>
         </div>
 
         {/* Tarjeta de Productos / Mercancia */}
@@ -418,7 +418,7 @@ export default function NuevaCompraPanel({ onCompraRegistrada }) {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <h2 className="compra-card-title">
               <Package size={18} />
-              Mercancía recibida ({items.length})
+              Mercancía Recibida ({items.length})
             </h2>
           </div>
 
@@ -474,11 +474,11 @@ export default function NuevaCompraPanel({ onCompraRegistrada }) {
                     </div>
 
                     <div style={{ textAlign: 'right' }}>
-                      <span style={{ fontSize: '0.84rem', fontWeight: 650, color: 'var(--color-ink)' }}>
-                        Costo actual: {formatearMoneda(prod.costo)}
+                      <span style={{ fontSize: '0.84rem', fontWeight: 600, color: 'var(--color-ink)' }}>
+                        Costo Actual: {formatearMoneda(prod.costo)}
                       </span>
                       <div style={{ fontSize: '0.74rem', color: 'var(--color-primary)' }}>
-                        + Agregar a la compra
+                        + Agregar A La Compra
                       </div>
                     </div>
                   </li>
@@ -497,90 +497,110 @@ export default function NuevaCompraPanel({ onCompraRegistrada }) {
           {items.length === 0 ? (
             <div className="empty-state" style={{ padding: '36px 16px' }}>
               <ShoppingCart size={32} />
-              <p className="empty-state__title">La lista de compra está vacía</p>
-              <p className="empty-state__description">
-                Busca productos arriba y agrégalos para ingresar las cantidades y costos recibidos.
+              <p
+                className="empty-state__title"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  justifyContent: 'center',
+                  margin: 0,
+                }}
+              >
+                <span>Lista De Compra Vacía</span>
+                <InfoTooltip
+                  tipo="help"
+                  texto="Busca productos en el buscador superior y selecciónalos para ingresar las cantidades y costos recibidos."
+                />
               </p>
             </div>
           ) : (
-            <div className="table-wrapper">
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>Producto</th>
-                    <th style={{ textAlign: 'right', width: '120px' }}>Cantidad</th>
-                    <th style={{ textAlign: 'right', width: '130px' }}>Costo unit. (RD$)</th>
-                    <th style={{ textAlign: 'right', width: '120px' }}>Subtotal</th>
-                    <th style={{ textAlign: 'center', width: '90px' }} title="Actualizar costo de catálogo">
-                      Act. costo
-                    </th>
-                    <th style={{ textAlign: 'center', width: '48px' }}>Quitar</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {items.map((linea, index) => (
-                    <tr key={linea.productoId}>
-                      <td>
-                        <div style={{ fontWeight: 650, color: 'var(--color-ink)' }}>
-                          {linea.nombre}
-                        </div>
-                        <div style={{ fontSize: '0.74rem', color: 'var(--color-text-muted)' }}>
-                          {linea.codigo} ({linea.unidadAbreviatura})
-                        </div>
-                      </td>
-
-                      <td style={{ textAlign: 'right' }}>
-                        <input
-                          type="number"
-                          step="any"
-                          min="0.001"
-                          className="compra-table-input"
-                          value={linea.cantidad === 0 ? '' : linea.cantidad}
-                          onChange={(e) => cambiarCantidad(index, e.target.value)}
-                          required
-                        />
-                      </td>
-
-                      <td style={{ textAlign: 'right' }}>
-                        <input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          className="compra-table-input"
-                          value={linea.costoUnitario === 0 ? '0' : linea.costoUnitario}
-                          onChange={(e) => cambiarCostoUnitario(index, e.target.value)}
-                          required
-                        />
-                      </td>
-
-                      <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--color-ink)' }}>
-                        {formatearMoneda(linea.subtotal)}
-                      </td>
-
-                      <td style={{ textAlign: 'center' }}>
-                        <input
-                          type="checkbox"
-                          checked={linea.actualizarCosto}
-                          onChange={() => alternarActualizarCostoLinea(index)}
-                          style={{ width: '16px', height: '16px', accentColor: 'var(--color-primary)' }}
-                          title="Actualizar costo base en el catálogo"
-                        />
-                      </td>
-
-                      <td style={{ textAlign: 'center' }}>
-                        <button
-                          type="button"
-                          className="button button--danger-soft button--sm icon-button"
-                          onClick={() => eliminarLinea(index)}
-                          title="Eliminar de la compra"
-                        >
-                          <Trash size={14} />
-                        </button>
-                      </td>
+            <div className="users-card" style={{ border: '1px solid var(--color-border)', borderRadius: '6px', overflow: 'hidden' }}>
+              <div className="users-table-wrap">
+                <table className="users-table users-table--compact">
+                  <thead>
+                    <tr>
+                      <th>Producto</th>
+                      <th style={{ textAlign: 'right', width: '120px' }}>Cantidad</th>
+                      <th style={{ textAlign: 'right', width: '130px' }}>Costo Unit. (RD$)</th>
+                      <th style={{ textAlign: 'right', width: '120px' }}>Subtotal</th>
+                      <th style={{ textAlign: 'center', width: '90px' }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', justifyContent: 'center' }}>
+                          Act. Costo
+                          <InfoTooltip texto="Actualizar costo base en el catálogo de productos" />
+                        </span>
+                      </th>
+                      <th style={{ textAlign: 'center', width: '50px' }}>Quitar</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {items.map((linea, index) => (
+                      <tr key={linea.productoId}>
+                        <td>
+                          <div style={{ fontWeight: 600, color: 'var(--color-ink)' }}>
+                            {linea.nombre}
+                          </div>
+                          <div style={{ fontSize: '0.74rem', color: 'var(--color-text-muted)' }}>
+                            {linea.codigo} ({linea.unidadAbreviatura})
+                          </div>
+                        </td>
+
+                        <td style={{ textAlign: 'right' }}>
+                          <input
+                            type="number"
+                            step="any"
+                            min="0.001"
+                            className="compra-table-input"
+                            value={linea.cantidad === 0 ? '' : linea.cantidad}
+                            onChange={(e) => cambiarCantidad(index, e.target.value)}
+                            required
+                          />
+                        </td>
+
+                        <td style={{ textAlign: 'right' }}>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            className="compra-table-input"
+                            value={linea.costoUnitario === 0 ? '0' : linea.costoUnitario}
+                            onChange={(e) => cambiarCostoUnitario(index, e.target.value)}
+                            required
+                          />
+                        </td>
+
+                        <td style={{ textAlign: 'right', fontWeight: 600, color: 'var(--color-ink)' }}>
+                          {formatearMoneda(linea.subtotal)}
+                        </td>
+
+                        <td style={{ textAlign: 'center' }}>
+                          <input
+                            type="checkbox"
+                            checked={linea.actualizarCosto}
+                            onChange={() => alternarActualizarCostoLinea(index)}
+                            style={{ width: '16px', height: '16px', accentColor: 'var(--color-primary)' }}
+                            title="Actualizar costo base en el catálogo"
+                          />
+                        </td>
+
+                        <td style={{ textAlign: 'center' }}>
+                          <div className="table-actions" style={{ justifyContent: 'center' }}>
+                            <button
+                              type="button"
+                              className="icon-button icon-button--danger"
+                              onClick={() => eliminarLinea(index)}
+                              title="Eliminar de la compra"
+                              aria-label="Eliminar"
+                            >
+                              <Trash size={15} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </div>
@@ -591,23 +611,24 @@ export default function NuevaCompraPanel({ onCompraRegistrada }) {
         <div className="compra-card">
           <h2 className="compra-card-title">
             <ShoppingCart size={18} />
-            Resumen de compra
+            Resumen De Compra
+            <InfoTooltip texto="Al registrar, el stock se incrementa inmediatamente en el inventario bajo movimiento de compra." />
           </h2>
 
           <div className="compra-summary-rows">
             <div className="compra-summary-row">
-              <span>Productos distintos:</span>
-              <strong style={{ color: 'var(--color-ink)' }}>{totalArticulos}</strong>
+              <span>Productos Distintos:</span>
+              <span style={{ color: 'var(--color-ink)', fontWeight: 600 }}>{totalArticulos}</span>
             </div>
 
             <div className="compra-summary-row">
-              <span>Unidades totales:</span>
-              <strong style={{ color: 'var(--color-ink)' }}>{formatearNumero(totalUnidades)}</strong>
+              <span>Unidades Totales:</span>
+              <span style={{ color: 'var(--color-ink)', fontWeight: 600 }}>{formatearNumero(totalUnidades)}</span>
             </div>
           </div>
 
           <div className="compra-summary-total">
-            <span>Total a pagar:</span>
+            <span>Total A Pagar:</span>
             <span>{formatearMoneda(totalCompra)}</span>
           </div>
 
@@ -627,19 +648,15 @@ export default function NuevaCompraPanel({ onCompraRegistrada }) {
             {guardando ? (
               <>
                 <Loader size={16} className="spin" />
-                Registrando mercancía...
+                Registrando Mercancía...
               </>
             ) : (
               <>
                 <Check size={18} />
-                Registrar compra
+                Registrar Compra
               </>
             )}
           </button>
-
-          <p style={{ margin: '4px 0 0', fontSize: '0.76rem', color: 'var(--color-text-muted)', textAlign: 'center' }}>
-            Al registrar, el stock se incrementa inmediatamente en el inventario bajo movimiento de compra.
-          </p>
         </div>
       </div>
 

@@ -137,12 +137,8 @@ export default function SuplidorModal({
     <Modal
       abierto={abierto}
       onCerrar={onCerrar}
-      titulo={suplidorEditando ? 'Editar suplidor' : 'Nuevo suplidor'}
-      descripcion={
-        suplidorEditando
-          ? 'Actualiza los datos comerciales y de contacto del suplidor.'
-          : 'Registra un proveedor de mercancías para compras e inventario.'
-      }
+      titulo={suplidorEditando ? 'Editar Suplidor' : 'Nuevo Suplidor'}
+      tamano="md"
       footer={
         <>
           <button
@@ -165,9 +161,9 @@ export default function SuplidorModal({
                 Guardando...
               </>
             ) : suplidorEditando ? (
-              'Guardar cambios'
+              'Guardar Cambios'
             ) : (
-              'Registrar suplidor'
+              'Registrar Suplidor'
             )}
           </button>
         </>
@@ -176,7 +172,7 @@ export default function SuplidorModal({
       <form
         id="form-suplidor"
         onSubmit={guardar}
-        className="form-stack"
+        className="form-stack form-stack--compact"
         noValidate
       >
         {errorForm ? (
@@ -187,7 +183,7 @@ export default function SuplidorModal({
         ) : null}
 
         <div className="field">
-          <label htmlFor="sup-nombre">Razón social o nombre comercial *</label>
+          <label htmlFor="sup-nombre">Razón Social O Nombre Comercial *</label>
           <input
             id="sup-nombre"
             type="text"
@@ -205,7 +201,7 @@ export default function SuplidorModal({
 
         <div className="field-grid">
           <div className="field">
-            <label htmlFor="sup-rnc">RNC o cédula</label>
+            <label htmlFor="sup-rnc">RNC O Cédula</label>
             <input
               id="sup-rnc"
               type="text"
@@ -221,7 +217,7 @@ export default function SuplidorModal({
           </div>
 
           <div className="field">
-            <label htmlFor="sup-contacto">Persona de contacto</label>
+            <label htmlFor="sup-contacto">Persona De Contacto</label>
             <input
               id="sup-contacto"
               type="text"
@@ -255,7 +251,7 @@ export default function SuplidorModal({
           </div>
 
           <div className="field">
-            <label htmlFor="sup-email">Correo electrónico</label>
+            <label htmlFor="sup-email">Correo Electrónico</label>
             <input
               id="sup-email"
               type="email"
@@ -272,7 +268,7 @@ export default function SuplidorModal({
         </div>
 
         <div className="field">
-          <label htmlFor="sup-direccion">Dirección física</label>
+          <label htmlFor="sup-direccion">Dirección Física</label>
           <input
             id="sup-direccion"
             type="text"
@@ -295,7 +291,7 @@ export default function SuplidorModal({
               checked={form.activo}
               onChange={(e) => setForm((f) => ({ ...f, activo: e.target.checked }))}
             />
-            <span>Suplidor activo y habilitado para compras</span>
+            <span>Activo</span>
           </label>
         </div>
       </form>

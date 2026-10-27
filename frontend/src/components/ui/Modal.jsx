@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'reicon-react';
 
@@ -13,6 +13,30 @@ export default function Modal({
 }) {
   const panelRef = useRef(null);
   const tituloId = useId();
+  const [montado, setMontado] = useState(abierto);
+  const [activo, setActivo] = useState(false);
+
+  useEffect(() => {
+    let timer;
+    let frame;
+
+    if (abierto) {
+      setMontado(true);
+      frame = requestAnimationFrame(() => {
+        setActivo(true);
+      });
+    } else {
+      setActivo(false);
+      timer = setTimeout(() => {
+        setMontado(false);
+      }, 180);
+    }
+
+    return () => {
+      if (frame) cancelAnimationFrame(frame);
+      if (timer) clearTimeout(timer);
+    };
+  }, [abierto]);
 
   useEffect(() => {
     if (!abierto) return undefined;
@@ -43,11 +67,11 @@ export default function Modal({
     };
   }, [abierto, onCerrar]);
 
-  if (!abierto) return null;
+  if (!montado) return null;
 
   return createPortal(
     <div
-      className="modal-backdrop"
+      className={`modal-backdrop${activo ? ' modal-backdrop--active' : ''}`}
       onMouseDown={(evento) => {
         if (evento.target === evento.currentTarget) {
           onCerrar?.();
@@ -56,7 +80,7 @@ export default function Modal({
     >
       <div
         ref={panelRef}
-        className={`modal${tamano ? ` modal--${tamano}` : ''}`}
+        className={`modal${tamano ? ` modal--${tamano}` : ''}${activo ? ' modal--active' : ''}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby={tituloId}

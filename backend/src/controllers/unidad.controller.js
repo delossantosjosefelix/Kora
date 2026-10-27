@@ -43,11 +43,12 @@ export async function obtenerUnidad(req, res, next) {
 
 export async function crearUnidad(req, res, next) {
   try {
-    const { nombre, abreviatura } = req.body ?? {};
+    const { nombre, abreviatura, icono } = req.body ?? {};
 
     const unidad = await crearUnidadService({
       nombre,
       abreviatura,
+      icono,
       usuarioId: req.usuario.id,
       ip: req.ip,
     });
@@ -64,11 +65,11 @@ export async function crearUnidad(req, res, next) {
 
 export async function actualizarUnidad(req, res, next) {
   try {
-    const { nombre, abreviatura, activo } = req.body ?? {};
+    const { nombre, abreviatura, icono, activo } = req.body ?? {};
 
     const unidad = await actualizarUnidadService(
       req.params.id,
-      { nombre, abreviatura, activo },
+      { nombre, abreviatura, icono, activo },
       req.usuario.id,
       req.ip,
     );

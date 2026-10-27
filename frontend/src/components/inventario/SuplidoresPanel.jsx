@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   AlertCircle,
   CheckCircle,
   Edit,
+  Eye,
   Loader,
   Search,
   Trash,
@@ -10,15 +11,19 @@ import {
   XCircle,
 } from 'reicon-react';
 import CustomSelect from '../ui/CustomSelect.jsx';
+import Modal from '../ui/Modal.jsx';
+import Paginacion from '../catalogo/Paginacion.jsx';
 import { api } from '../../services/api.js';
 import notify from '../../utils/notify.js';
 import { mensajeError } from '../../utils/apiError.js';
 
 const OPCIONES_ESTADO = [
-  { valor: 'TODOS', etiqueta: 'Todos los estados' },
+  { valor: 'TODOS', etiqueta: 'Todos Los Estados' },
   { valor: 'ACTIVOS', etiqueta: 'Activos' },
   { valor: 'INACTIVOS', etiqueta: 'Inactivos' },
 ];
+
+const POR_PAGINA = 7;
 
 export default function SuplidoresPanel({
   onAbrirCrear,
@@ -31,7 +36,9 @@ export default function SuplidoresPanel({
   const [errorCarga, setErrorCarga] = useState('');
   const [busqueda, setBusqueda] = useState('');
   const [filtroEstado, setFiltroEstado] = useState('TODOS');
+  const [pagina, setPagina] = useState(1);
   const [procesandoId, setProcesandoId] = useState(null);
+  const [suplidorDetalle, setSuplidorDetalle] = useState(null);
 
   const cargarSuplidores = useCallback(async () => {
     setCargando(true);
@@ -67,6 +74,14 @@ export default function SuplidoresPanel({
   useEffect(() => {
     cargarSuplidores();
   }, [cargarSuplidores, refrescarKey]);
+
+  const totalPaginas = Math.max(1, Math.ceil(suplidores.length / POR_PAGINA));
+  const paginaValida = Math.min(Math.max(1, pagina), totalPaginas);
+
+  const suplidoresPaginados = useMemo(() => {
+    const inicio = (paginaValida - 1) * POR_PAGINA;
+    return suplidores.slice(inicio, inicio + POR_PAGINA);
+  }, [suplidores, paginaValida]);
 
   const alternarActivo = async (sup) => {
     setProcesandoId(sup.id);
@@ -145,9 +160,12 @@ export default function SuplidoresPanel({
           <input
             type="search"
             className="search-box-input"
-            placeholder="Buscar por nombre, RNC, contacto o teléfono..."
+            placeholder="Buscar Suplidor..."
             value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
+            onChange={(e) => {
+              setBusqueda(e.target.value);
+              setPagina(1);
+            }}
             aria-label="Buscar suplidores"
           />
         </div>
@@ -155,8 +173,11 @@ export default function SuplidoresPanel({
         <div className="users-controls">
           <CustomSelect
             valor={filtroEstado}
-            onChange={setFiltroEstado}
-            placeholder="Todos los estados"
+            onChange={(val) => {
+              setFiltroEstado(val);
+              setPagina(1);
+            }}
+            placeholder="Todos Los Estados"
             opciones={OPCIONES_ESTADO}
             aria-label="Filtrar por estado del suplidor"
           />
@@ -165,7 +186,7 @@ export default function SuplidoresPanel({
 
       <div className="users-card">
         <div className="users-table-wrap">
-          <table className="users-table">
+          <table className="users-table users-table--compact">
             <thead>
               <tr>
                 <th>Suplidor / Razón social</th>
@@ -174,7 +195,7 @@ export default function SuplidoresPanel({
                 <th>Teléfono / Correo</th>
                 <th>Dirección</th>
                 <th>Estado</th>
-                <th>Acciones</th>
+                <th style={{ textAlign: 'center', width: '120px' }}>Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -212,18 +233,36 @@ export default function SuplidoresPanel({
                   </td>
                 </tr>
               ) : (
-                suplidores.map((sup) => (
+                suplidoresPaginados.map((sup) => (
                   <tr key={sup.id}>
                     <td>
-                      <div>
-                        <div className="product-name">{sup.nombre}</div>
-                        {sup.compras_count > 0 ? (
-                          <div className="product-meta">
-                            <span className="table-muted" style={{ fontSize: '0.76rem' }}>
-                              {sup.compras_count} compra(s) asociada(s)
-                            </span>
+                      <div
+                        className="product-cell product-cell--interactive"
+                        style={{ minWidth: '180px' }}
+                        onClick={() => setSuplidorDetalle(sup)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') setSuplidorDetalle(sup);
+                        }}
+                        title="Ver detalles del suplidor"
+                      >
+                        <div>
+                          <div
+                            className="product-name cell-truncate"
+                            style={{ maxWidth: '210px' }}
+                            title={sup.nombre}
+                          >
+                            {sup.nombre}
                           </div>
-                        ) : null}
+                          {sup.compras_count > 0 ? (
+                            <div className="product-meta">
+                              <span className="table-muted" style={{ fontSize: '0.76rem' }}>
+                                {sup.compras_count} compra(s) asociada(s)
+                              </span>
+                            </div>
+                          ) : null}
+                        </div>
                       </div>
                     </td>
 
@@ -234,7 +273,11 @@ export default function SuplidoresPanel({
                     </td>
 
                     <td>
-                      <span className="user-role-text">
+                      <span
+                        className="user-role-text cell-truncate"
+                        style={{ maxWidth: '140px' }}
+                        title={sup.contacto || '-'}
+                      >
                         {sup.contacto || '-'}
                       </span>
                     </td>
@@ -243,7 +286,11 @@ export default function SuplidoresPanel({
                       <div>
                         <div>{sup.telefono || '-'}</div>
                         {sup.email ? (
-                          <div className="table-muted" style={{ fontSize: '0.78rem' }}>
+                          <div
+                            className="table-muted cell-truncate"
+                            style={{ fontSize: '0.78rem', maxWidth: '160px' }}
+                            title={sup.email}
+                          >
                             {sup.email}
                           </div>
                         ) : null}
@@ -251,21 +298,37 @@ export default function SuplidoresPanel({
                     </td>
 
                     <td>
-                      <span className="table-muted" style={{ maxWidth: '200px', display: 'inline-block' }}>
+                      <span
+                        className="table-muted cell-truncate"
+                        style={{ maxWidth: '180px' }}
+                        title={sup.direccion || '-'}
+                      >
                         {sup.direccion || '-'}
                       </span>
                     </td>
 
                     <td>
                       <span
-                        className={`user-status-text ${sup.activo ? 'user-status-text--active' : 'user-status-text--inactive'}`}
+                        className={`user-status-text ${
+                          sup.activo ? 'user-status-text--active' : 'user-status-text--inactive'
+                        }`}
                       >
                         {sup.activo ? 'Activo' : 'Inactivo'}
                       </span>
                     </td>
 
                     <td>
-                      <div className="table-actions">
+                      <div className="table-actions" style={{ justifyContent: 'center' }}>
+                        <button
+                          type="button"
+                          className="icon-button"
+                          onClick={() => setSuplidorDetalle(sup)}
+                          title="Ver detalles"
+                          aria-label={`Ver detalles de ${sup.nombre}`}
+                        >
+                          <Eye size={17} />
+                        </button>
+
                         <button
                           type="button"
                           className="icon-button"
@@ -317,6 +380,91 @@ export default function SuplidoresPanel({
           </table>
         </div>
       </div>
+
+      {suplidores.length > 0 ? (
+        <Paginacion
+          pagina={paginaValida}
+          totalPaginas={totalPaginas}
+          onCambiarPagina={setPagina}
+        />
+      ) : null}
+
+      {/* Modal de Detalle Completo del Suplidor */}
+      <Modal
+        abierto={Boolean(suplidorDetalle)}
+        onCerrar={() => setSuplidorDetalle(null)}
+        titulo="Detalle Del Suplidor"
+        tamano="md"
+        footer={
+          <button
+            type="button"
+            className="button button--secondary"
+            onClick={() => setSuplidorDetalle(null)}
+          >
+            Cerrar
+          </button>
+        }
+      >
+        {suplidorDetalle ? (
+          <div className="detail-grid">
+            <div className="detail-item detail-item--full">
+              <span className="detail-label">Razón social / Proveedor</span>
+              <span className="detail-value" style={{ fontSize: '1.05rem', fontWeight: 600 }}>
+                {suplidorDetalle.nombre}
+              </span>
+            </div>
+
+            <div className="detail-item">
+              <span className="detail-label">RNC o cédula</span>
+              <span className="detail-value">{suplidorDetalle.rnc || 'No registrado'}</span>
+            </div>
+
+            <div className="detail-item">
+              <span className="detail-label">Persona de contacto</span>
+              <span className="detail-value">{suplidorDetalle.contacto || 'No especificado'}</span>
+            </div>
+
+            <div className="detail-item">
+              <span className="detail-label">Teléfono comercial</span>
+              <span className="detail-value">{suplidorDetalle.telefono || 'No registrado'}</span>
+            </div>
+
+            <div className="detail-item">
+              <span className="detail-label">Correo electrónico</span>
+              <span className="detail-value">{suplidorDetalle.email || 'No registrado'}</span>
+            </div>
+
+            <div className="detail-item">
+              <span className="detail-label">Estado de cuenta</span>
+              <span className="detail-value">
+                <span
+                  className={`user-status-text ${
+                    suplidorDetalle.activo ? 'user-status-text--active' : 'user-status-text--inactive'
+                  }`}
+                >
+                  {suplidorDetalle.activo ? 'Activo' : 'Inactivo'}
+                </span>
+              </span>
+            </div>
+
+            <div className="detail-item">
+              <span className="detail-label">Compras registradas</span>
+              <span className="detail-value" style={{ fontWeight: 600 }}>
+                {suplidorDetalle.compras_count ?? 0} compra(s) asociada(s)
+              </span>
+            </div>
+
+            {suplidorDetalle.direccion ? (
+              <div className="detail-item detail-item--full">
+                <span className="detail-label">Dirección física completa</span>
+                <div className="detail-value detail-value--box">
+                  {suplidorDetalle.direccion}
+                </div>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+      </Modal>
     </div>
   );
 }

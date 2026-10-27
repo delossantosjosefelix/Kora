@@ -59,3 +59,12 @@ export function formatearNumero(valor) {
     maximumFractionDigits: 2,
   }).format(numero);
 }
+
+export function formatearEntero(valor) {
+  const numero = Math.round(Number(valor));
+  if (!Number.isFinite(numero)) return '0';
+
+  return new Intl.NumberFormat('es-DO', {
+    maximumFractionDigits: 0,
+  }).format(numero);
+}

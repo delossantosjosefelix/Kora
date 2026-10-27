@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { Edit, Plus } from 'reicon-react';
+import { Plus } from 'reicon-react';
 import { useAuth } from '../hooks/useAuth.js';
 import { api } from '../services/api.js';
 import ExistenciasPanel from '../components/inventario/ExistenciasPanel.jsx';
@@ -8,16 +8,27 @@ import SuplidoresPanel from '../components/inventario/SuplidoresPanel.jsx';
 import AjusteInventarioModal from '../components/inventario/AjusteInventarioModal.jsx';
 import SuplidorModal from '../components/inventario/SuplidorModal.jsx';
 
+const TABS_INVENTARIO = ['existencias', 'movimientos', 'suplidores'];
+
 export default function Inventario() {
   const { esAdministrador, esGerente } = useAuth();
   const puedeGestionar = esAdministrador || esGerente;
 
   const [tab, setTab] = useState('existencias');
+  const [direccion, setDireccion] = useState(null);
   const [totales, setTotales] = useState({
     existencias: 0,
     movimientos: 0,
     suplidores: 0,
   });
+
+  const cambiarTab = (nuevaTab) => {
+    if (nuevaTab === tab) return;
+    const idxActual = TABS_INVENTARIO.indexOf(tab);
+    const idxNuevo = TABS_INVENTARIO.indexOf(nuevaTab);
+    setDireccion(idxNuevo >= idxActual ? 'adelante' : 'atras');
+    setTab(nuevaTab);
+  };
 
   const [modalAjusteAbierto, setModalAjusteAbierto] = useState(false);
   const [productoParaAjuste, setProductoParaAjuste] = useState(null);
@@ -91,7 +102,7 @@ export default function Inventario() {
     <div className="users-page">
       <header className="users-header">
         <div>
-          <h1 className="users-title">Inventario y existencias</h1>
+          <h1 className="users-title">Inventario</h1>
         </div>
 
         {puedeGestionar ? (
@@ -102,8 +113,8 @@ export default function Inventario() {
                 className="button button--primary"
                 onClick={abrirAjusteGeneral}
               >
-                <Edit size={16} />
-                Nuevo ajuste o merma
+                <Plus size={16} />
+                Nuevo Ajuste
               </button>
             ) : tab === 'suplidores' ? (
               <button
@@ -112,7 +123,7 @@ export default function Inventario() {
                 onClick={abrirCrearSuplidor}
               >
                 <Plus size={16} />
-                Nuevo suplidor
+                Nuevo Suplidor
               </button>
             ) : null}
           </div>
@@ -127,7 +138,7 @@ export default function Inventario() {
             role="tab"
             aria-selected={tab === 'existencias'}
             className={`users-tab${tab === 'existencias' ? ' users-tab--active' : ''}`}
-            onClick={() => setTab('existencias')}
+            onClick={() => cambiarTab('existencias')}
           >
             Existencias
             <span className="users-tab-count">{totales.existencias ?? 0}</span>
@@ -140,7 +151,7 @@ export default function Inventario() {
                 role="tab"
                 aria-selected={tab === 'movimientos'}
                 className={`users-tab${tab === 'movimientos' ? ' users-tab--active' : ''}`}
-                onClick={() => setTab('movimientos')}
+                onClick={() => cambiarTab('movimientos')}
               >
                 Movimientos
                 <span className="users-tab-count">{totales.movimientos ?? 0}</span>
@@ -151,7 +162,7 @@ export default function Inventario() {
                 role="tab"
                 aria-selected={tab === 'suplidores'}
                 className={`users-tab${tab === 'suplidores' ? ' users-tab--active' : ''}`}
-                onClick={() => setTab('suplidores')}
+                onClick={() => cambiarTab('suplidores')}
               >
                 Suplidores
                 <span className="users-tab-count">{totales.suplidores ?? 0}</span>
@@ -161,12 +172,11 @@ export default function Inventario() {
         </div>
       </div>
 
-      {/* Paneles sincronizados */}
+      {/* Paneles sincronizados con animación direccional */}
       <div
+        className={`users-page-panel${tab === 'existencias' && direccion ? ` tab-panel--slide-${direccion}` : ''}`}
         style={{
           display: tab === 'existencias' ? 'flex' : 'none',
-          flexDirection: 'column',
-          gap: '20px',
         }}
         hidden={tab !== 'existencias'}
       >
@@ -180,10 +190,9 @@ export default function Inventario() {
       {puedeGestionar ? (
         <>
           <div
+            className={`users-page-panel${tab === 'movimientos' && direccion ? ` tab-panel--slide-${direccion}` : ''}`}
             style={{
               display: tab === 'movimientos' ? 'flex' : 'none',
-              flexDirection: 'column',
-              gap: '20px',
             }}
             hidden={tab !== 'movimientos'}
           >
@@ -194,10 +203,9 @@ export default function Inventario() {
           </div>
 
           <div
+            className={`users-page-panel${tab === 'suplidores' && direccion ? ` tab-panel--slide-${direccion}` : ''}`}
             style={{
               display: tab === 'suplidores' ? 'flex' : 'none',
-              flexDirection: 'column',
-              gap: '20px',
             }}
             hidden={tab !== 'suplidores'}
           >
