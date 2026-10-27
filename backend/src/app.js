@@ -6,6 +6,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import { authRouter } from './routes/auth.routes.js';
+import { cajaRouter } from './routes/caja.routes.js';
 import { categoriaRouter } from './routes/categoria.routes.js';
 import { compraRouter } from './routes/compra.routes.js';
 import { healthRouter } from './routes/health.routes.js';
@@ -42,6 +43,7 @@ app.use('/uploads', express.static(UPLOADS_DIR));
 
 app.use('/api/health', healthRouter);
 app.use('/api/auth', authRouter);
+app.use('/api/cajas', cajaRouter);
 app.use('/api/categorias', categoriaRouter);
 app.use('/api/unidades', unidadRouter);
 app.use('/api/productos', productoRouter);

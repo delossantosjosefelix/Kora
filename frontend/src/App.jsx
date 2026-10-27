@@ -6,6 +6,7 @@ import AppLayout from './layouts/AppLayout.jsx';
 import { RequireAuth } from './components/RequireAuth.jsx';
 import Login from './pages/Login.jsx';
 import Dashboard from './pages/Dashboard.jsx';
+import Caja from './pages/Caja.jsx';
 import Catalogo from './pages/Catalogo.jsx';
 import CambiarPassword from './pages/CambiarPassword.jsx';
 import Usuarios from './pages/Usuarios.jsx';
@@ -62,6 +63,7 @@ export default function App() {
         <Route element={<AppLayout />}>
           <Route path="/" element={<Navigate to={inicio} replace />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/caja" element={<Caja />} />
           <Route path="/catalogo" element={<Catalogo />} />
           <Route path="/inventario" element={<Inventario />} />
           <Route

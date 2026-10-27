@@ -12,6 +12,7 @@ import './styles/layout.css';
 import './styles/auth.css';
 import './styles/users.css';
 import './styles/catalogo.css';
+import './styles/caja.css';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

@@ -58,8 +58,8 @@ Antes de empezar un día, revisa la [[Rutina diaria]]. Si te atrasas, mira [[Si 
 ## Semana 2 · Caja y ventas
 
 ### [[2026-11-02|Lun 2 nov]]
-- [ ] Cajas y turnos: abrir caja, API y pantalla
-- [ ] Listo cuando: No se puede abrir dos veces
+- [x] Cajas y turnos: abrir caja, API y pantalla
+- [x] Listo cuando: No se puede abrir dos veces
 
 ### [[2026-11-03|Mar 3 nov]]
 - [ ] Movimientos de caja y lógica de cierre
